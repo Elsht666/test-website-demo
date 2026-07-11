@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试演示主页 - 资源分享</title>
+    <style>
+        /* ==========================================
+           全局基础样式与 CSS 变量 (页面美化优化)
+           ========================================== */
+        :root {
+            --primary-color: #00a1d6; /* B站主题蓝 */
+            --primary-hover: #0088b9;
+            --accent-color: #fb7299;  /* B站主题粉 */
+            --bg-color: #f4f5f7;
+            --card-bg: #ffffff;
+            --text-primary: #222222;
+            --text-secondary: #666666;
+            --text-light: #999999;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            scroll-behavior: smooth; /* 滚动平滑效果 */
+            opacity: 0; /* 页面载入动画初始状态 */
+            animation: fadeInPage 0.8s ease-out forwards;
+        }
+
+        /* 页面载入动画 */
+        @keyframes fadeInPage {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==========================================
+           区块渐变显示 (滚动动画)
+           ========================================== */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ==========================================
+           布局与组件样式
+           ========================================== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        /* 头部个人信息 */
+        .profile-header {
+            text-align: center;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        .avatar:hover {
+            transform: scale(1.05) rotate(5deg);
+        }
+        .profile-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .profile-bio {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* 按钮样式与 Hover 过渡 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #00b5e5);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-hover), #009bc7);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 161, 214, 0.4);
+        }
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent-color), #ff85ad);
+            color: #fff;
+        }
+        .btn-accent:hover {
+            background: linear-gradient(135deg, #e56086, var(--accent-color));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(251, 114, 153, 0.4);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: #fff;
+            transform: translateY(-3px);
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* 资源区块 */
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        .resource-desc {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 14px;
+            padding: 20px 0;
+        }
+
+        /* ==========================================
+           弹窗样式 (环境判断 & 频次限制 & 资源展示)
+           ========================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 35px 30px;
+            border-radius: 16px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.85) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: #f0f0f0;
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover {
+            background: #e0e0e0;
+            color: #333;
+            transform: rotate(90deg);
+        }
+        .modal-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .modal-text {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .countdown-timer {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-color);
+            font-family: "Courier New", monospace;
+            margin: 15px 0;
+            letter-spacing: 2px;
+        }
+        .resource-info {
+            background: #f8f9fa;
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .resource-info p {
+            margin: 8px 0;
+            word-break: break-all;
+        }
+        .resource-info strong {
+            color: var(--primary-color);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .container { padding: 20px 15px; }
+            .card { padding: 20px; }
+            .btn { padding: 10px 20px; font-size: 14px; }
+            .modal-content { padding: 25px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- ==========================================
+             个人信息区块
+             ========================================== -->
+        <section class="card profile-header fade-in-section">
+            <!-- 使用 B站默认头像 API 或占位图 -->
+            <img src="https://images.weserv.nl/?url=https://i0.hdslb.com/bfs/face/member/noface.jpg&w=200&h=200" 
+                 alt="Avatar" class="avatar" id="userAvatar"
+                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwYTFkNiIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSI0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiI+8J+RuzwvdGV4dD48L3N2Zz4='">
+            <h1 class="profile-name">测试演示主页</h1>
+            <p class="profile-bio">测试资源分享页面，用于Cloudflare Pages功能调试，欢迎访问测试站点！</p>
+            <div class="btn-group">
+                <a href="https://space.bilibili.com/1476255996" target="_blank" rel="noopener noreferrer" class="btn btn-accent">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773H5.333zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373z"/></svg>
+                    访问 B 站主页
+                </a>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             资源领取区块
+             ========================================== -->
+        <section class="card fade-in-section">
+            <h2 class="section-title">专属资源福利</h2>
+            <p class="resource-desc">
+                这里为您准备了精心整理的独家资源包。为了保证资源的长期有效性和服务器的稳定，
+                每位用户每 24 小时可领取一次。点击下方按钮获取网盘链接及提取码。
+            </p>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="claimBtn" onclick="handleClaim()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    立即领取资源
+                </button>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             关于我区块
+             ========================================== -->
+        <section class="card fade-in-section">
+            <h2 class="section-title">关于本测试站</h2>
+            <p class="resource-desc">
+                本页面为独立测试站点（域名：test-website-demo.pages.dev），用于调试页面功能、部署流程、交互逻辑。
+                B站UID: 1476255996，正式站点为 my-website01-aty.pages.dev，二者完全隔离互不影响。
+            </p>
+            <div class="btn-group">
+                <a href="https://space.bilibili.com/1476255996" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+                    关注我的 B 站
+                </a>
+            </div>
+        </section>
+
+        <footer class="footer fade-in-section">
+            <p>&copy; <span id="currentYear"></span> Test Demo Site. Powered by Cloudflare Pages.</p>
+        </footer>
+    </div>
+
+    <!-- ==========================================
+         弹窗 1: B站内置浏览器环境提示
+         ========================================== -->
+    <div class="modal-overlay" id="biliBrowserModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('biliBrowserModal')">&times;</button>
+            <div class="modal-icon">⚠️</div>
+            <h3 class="modal-title">检测到 B 站内置浏览器</h3>
+            <p class="modal-text">
+                B 站内置浏览器可能存在功能限制（如下载拦截、样式错乱等），为了获得最佳的资源领取与浏览体验，建议您跳转至系统默认浏览器打开本页面。
+            </p>
+            <button class="btn btn-primary" onclick="copyCurrentUrl()" style="width: 100%; margin-bottom: 10px;">
+                复制链接到系统浏览器
+            </button>
+            <button class="btn btn-outline" onclick="closeModal('biliBrowserModal')" style="width: 100%;">
+                我知道了，继续浏览
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         弹窗 2: 24小时领取频次限制提示
+         ========================================== -->
+    <div class="modal-overlay" id="limitModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeLimitModal()">&times;</button>
+            <div class="modal-icon">⏳</div>
+            <h3 class="modal-title">领取过于频繁</h3>
+            <p class="modal-text">
+                为保证资源公平分享，同一设备每 24 小时仅可领取一次。请在倒计时结束后再次尝试：
+            </p>
+            <div class="countdown-timer" id="countdownTimer">00:00:00</div>
+            <button class="btn btn-outline" onclick="closeLimitModal()" style="width: 100%;">
+                我知道了
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         弹窗 3: 资源领取成功展示
+         ========================================== -->
+    <div class="modal-overlay" id="resourceModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('resourceModal')">&times;</button>
+            <div class="modal-icon">🎉</div>
+            <h3 class="modal-title">领取成功！</h3>
+            <p class="modal-text">您的专属资源已准备就绪，请复制下方信息前往网盘下载：</p>
+            <div class="resource-info">
+                <p><strong>网盘链接：</strong><br><span id="panLink">https://pan.baidu.com/s/12K--t3vGVnpaFoKZ-nCIrQ</span></p>
+                <p><strong>提取码：</strong><span id="panCode">g6hs</span></p>
+            </div>
+            <button class="btn btn-primary" onclick="copyResourceInfo()" style="width: 100%; margin-bottom: 10px;">
+                一键复制链接与提取码
+            </button>
+            <button class="btn btn-outline" onclick="closeModal('resourceModal')" style="width: 100%;">
+                关闭
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================
+           1. 页面载入与滚动交互动效 (IntersectionObserver)
+           ========================================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            // 动态设置当前年份
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+            // 滚动渐显动画观察器
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        // 触发一次后取消观察，提升性能
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in-section').forEach(section => {
+                observer.observe(section);
+            });
+
+            // 执行环境检测
+            checkBiliBrowser();
+        });
+
+        /* ==========================================
+           2. 浏览器环境判断模块 (B站内置浏览器检测)
+           ========================================== */
+        function checkBiliBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            // 检测 B站客户端、小程序等内置环境的 UA 特征
+            const isBiliBrowser = ua.includes('bilibili') || 
+                                  ua.includes('biliapp') || 
+                                  ua.includes('biliclient') ||
+                                  ua.includes('bili/');
+            
+            if (isBiliBrowser) {
+                openModal('biliBrowserModal');
+            }
+        }
+
+        // 复制当前页面 URL 到剪贴板（自动适配当前测试站域名 test-website-demo.pages.dev）
+        function copyCurrentUrl() {
+            const url = window.location.href;
+            copyTextToClipboard(url, '页面链接已复制！请打开系统浏览器粘贴访问。');
+        }
+
+        /* ==========================================
+           3. 领取频次限制功能 (24小时 LocalStorage 限制)
+           ========================================== */
+        const LIMIT_STORAGE_KEY = 'test_site_last_claim_time';
+        const LIMIT_DURATION_MS = 24 * 60 * 60 * 1000; // 24小时的毫秒数
+        let countdownInterval = null; // 用于存储倒计时定时器 ID
+
+        function handleClaim() {
+            const now = Date.now();
+            const lastClaimTime = localStorage.getItem(LIMIT_STORAGE_KEY);
+
+            // 判断是否在 24 小时内
+            if (lastClaimTime && (now - parseInt(lastClaimTime, 10)) < LIMIT_DURATION_MS) {
+                // 计算剩余时间并显示限制弹窗
+                const remainingTime = LIMIT_DURATION_MS - (now - parseInt(lastClaimTime, 10));
+                showLimitModal(remainingTime);
+            } else {
+                // 允许领取：记录当前时间戳，展示资源弹窗
+                localStorage.setItem(LIMIT_STORAGE_KEY, now.toString());
+                openModal('resourceModal');
+            }
+        }
+
+        function showLimitModal(remainingTime) {
+            openModal('limitModal');
+            updateCountdown(remainingTime);
+
+            // 清除可能存在的旧定时器
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            // 启动每秒倒计时
+            countdownInterval = setInterval(() => {
+                remainingTime -= 1000;
+                if (remainingTime <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    closeModal('limitModal');
+                    return;
+                }
+                updateCountdown(remainingTime);
+            }, 1000);
+        }
+
+        function updateCountdown(ms) {
+            const hours = Math.floor(ms / 3600000);
+            const minutes = Math.floor((ms % 3600000) / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            
+            const timerEl = document.getElementById('countdownTimer');
+            if (timerEl) {
+                timerEl.textContent = 
+                    `${hours.toString().padStart(2, '0')}:` +
+                    `${minutes.toString().padStart(2, '0')}:` +
+                    `${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // 关闭限制弹窗时清理定时器
+        function closeLimitModal() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            closeModal('limitModal');
+        }
+
+        // 复制资源信息
+        function copyResourceInfo() {
+            const link = document.getElementById('panLink').textContent;
+            const code = document.getElementById('panCode').textContent;
+            const text = `百度网盘链接: ${link}\n提取码: ${code}`;
+            copyTextToClipboard(text, '资源链接与提取码已复制到剪贴板！');
+        }
+
+        /* ==========================================
+           4. 通用工具函数 (弹窗控制 & 剪贴板)
+           ========================================== */
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('active');
+        }
+
+        // 点击遮罩层关闭弹窗
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    // 如果是限制弹窗，需要特殊清理
+                    if (overlay.id === 'limitModal') {
+                        closeLimitModal();
+                    } else {
+                        overlay.classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        // 兼容的剪贴板复制函数
+        function copyTextToClipboard(text, successMsg) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast(successMsg);
+                }).catch(() => {
+                    fallbackCopy(text, successMsg);
+                });
+            } else {
+                fallbackCopy(text, successMsg);
+            }
+        }
+
+        // 降级复制方案
+        function fallbackCopy(text, successMsg) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg);
+            } catch (err) {
+                showToast('复制失败，请手动长按复制。');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // 简易 Toast 提示
+        function showToast(message) {
+            let toast = document.getElementById('global-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'global-toast';
+                toast.style.cssText = `
+                    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+                    background: rgba(0,0,0,0.8); color: #fff; padding: 12px 24px; border-radius: 8px;
+                    font-size: 14px; z-index: 2000; opacity: 0; transition: all 0.3s ease; pointer-events: none;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
