@@ -6,20 +6,19 @@
     <title>测试演示主页 - 资源分享</title>
     <style>
         /* ==========================================
-           全局基础样式与 CSS 变量 (页面美化优化)
+           全局基础样式与 CSS 变量
            ========================================== */
         :root {
-            --primary-color: #00a1d6; /* B站主题蓝 */
+            --primary-color: #00a1d6;
             --primary-hover: #0088b9;
-            --accent-color: #fb7299;  /* B站主题粉 */
-            --bg-color: #f4f5f7;
-            --card-bg: #ffffff;
+            --accent-color: #fb7299;
+            --card-bg: rgba(255, 255, 255, 0.93);
             --text-primary: #222222;
             --text-secondary: #666666;
             --text-light: #999999;
-            --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
-            --radius: 12px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.2);
+            --radius: 16px;
         }
 
         * {
@@ -30,24 +29,154 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-            /* 动态渐变背景 + 浮动光影动画 */
-            background: linear-gradient(-45deg, #eef2f7, #e6edf7, #f0f6fd, #e9f1fc);
-            background-size: 400% 400%;
-            animation: gradientBg 12s ease infinite;
             color: var(--text-primary);
             line-height: 1.6;
-            scroll-behavior: smooth; /* 滚动平滑效果 */
-            opacity: 0; /* 页面载入动画初始状态 */
-            animation: fadeInPage 0.8s ease-out forwards;
-            position: relative;
+            min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
+            opacity: 0;
+            animation: fadeInPage 0.8s ease-out forwards;
         }
 
-        /* 动态渐变背景动画 */
+        /* ==========================================
+           科技感动态渐变背景系统
+           ========================================== */
+        .bg-base {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(-45deg, #0a0e27, #1a1040, #0d2137, #0a1628, #12153a, #0e1a30);
+            background-size: 400% 400%;
+            animation: gradientBg 15s ease infinite;
+            z-index: -4;
+        }
+
         @keyframes gradientBg {
             0% { background-position: 0% 50%; }
+            25% { background-position: 50% 0%; }
             50% { background-position: 100% 50%; }
+            75% { background-position: 50% 100%; }
             100% { background-position: 0% 50%; }
+        }
+
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: -3;
+            pointer-events: none;
+        }
+
+        .bg-orb-1 {
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(0, 161, 214, 0.35) 0%, transparent 70%);
+            top: -150px;
+            left: -100px;
+            animation: floatOrb1 22s ease-in-out infinite;
+        }
+
+        .bg-orb-2 {
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle, rgba(251, 114, 153, 0.25) 0%, transparent 70%);
+            bottom: -120px;
+            right: -80px;
+            animation: floatOrb2 18s ease-in-out infinite;
+        }
+
+        .bg-orb-3 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(100, 120, 255, 0.3) 0%, transparent 70%);
+            top: 40%;
+            left: 45%;
+            animation: floatOrb3 25s ease-in-out infinite;
+        }
+
+        .bg-orb-4 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(0, 220, 200, 0.2) 0%, transparent 70%);
+            top: 20%;
+            right: 5%;
+            animation: floatOrb4 20s ease-in-out infinite;
+        }
+
+        .bg-orb-5 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(180, 100, 255, 0.2) 0%, transparent 70%);
+            bottom: 20%;
+            left: 10%;
+            animation: floatOrb5 23s ease-in-out infinite;
+        }
+
+        @keyframes floatOrb1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(80px, 50px) scale(1.1); }
+            50% { transform: translate(40px, 100px) scale(0.95); }
+            75% { transform: translate(-30px, 60px) scale(1.05); }
+        }
+
+        @keyframes floatOrb2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-60px, -40px) scale(1.08); }
+            50% { transform: translate(-100px, -80px) scale(0.92); }
+            75% { transform: translate(-30px, -60px) scale(1.04); }
+        }
+
+        @keyframes floatOrb3 {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            33% { transform: translate(-30%, -60%) scale(1.15); }
+            66% { transform: translate(-70%, -40%) scale(0.9); }
+        }
+
+        @keyframes floatOrb4 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(-50px, 60px) scale(1.1) rotate(10deg); }
+        }
+
+        @keyframes floatOrb5 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            30% { transform: translate(40px, -50px) scale(1.08); }
+            60% { transform: translate(70px, 30px) scale(0.95); }
+        }
+
+        /* 科技感网格覆盖层 */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* 微光粒子层 */
+        .bg-particles {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: particleFloat linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
         }
 
         /* 页面载入动画 */
@@ -70,26 +199,47 @@
         }
 
         /* ==========================================
-           布局与组件样式
+           布局与组件样式 - 等高双卡片网格
            ========================================== */
         .container {
-            max-width: 800px;
+            max-width: 920px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 50px 24px 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: stretch;
+            min-height: 100vh;
+            align-content: center;
         }
 
         .card {
             background: var(--card-bg);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 36px 30px;
             transition: box-shadow 0.3s ease, transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .card:hover {
             box-shadow: var(--shadow-hover);
-            transform: translateY(-2px);
+            transform: translateY(-4px);
+        }
+
+        /* 页脚横跨两列 */
+        .footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 13px;
+            padding: 10px 0 0;
         }
 
         /* 头部个人信息 */
@@ -97,34 +247,37 @@
             text-align: center;
         }
         .avatar {
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            border: 4px solid var(--primary-color);
-            margin-bottom: 15px;
+            border: 3px solid var(--primary-color);
+            margin-bottom: 14px;
             transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 161, 214, 0.3);
         }
         .avatar:hover {
             transform: scale(1.05) rotate(5deg);
         }
         .profile-name {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 600;
             margin-bottom: 8px;
         }
         .profile-bio {
             color: var(--text-secondary);
-            margin-bottom: 20px;
+            margin-bottom: 22px;
+            font-size: 14px;
+            line-height: 1.7;
         }
 
-        /* 按钮样式与 Hover 过渡 */
+        /* 按钮样式 */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 12px 28px;
+            padding: 12px 26px;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             text-decoration: none;
             cursor: pointer;
@@ -151,9 +304,18 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(251, 114, 153, 0.4);
         }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #ddd;
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+        }
         .btn-group {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
         }
@@ -162,7 +324,7 @@
         .section-title {
             font-size: 20px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -179,18 +341,13 @@
             color: var(--text-secondary);
             margin-bottom: 25px;
             line-height: 1.8;
-        }
-
-        /* 页脚 */
-        .footer {
-            text-align: center;
-            color: var(--text-light);
             font-size: 14px;
-            padding: 20px 0;
+            text-align: left;
+            width: 100%;
         }
 
         /* ==========================================
-           弹窗样式 (环境判断 & 资源展示)
+           弹窗样式
            ========================================== */
         .modal-overlay {
             position: fixed;
@@ -219,7 +376,7 @@
             transform: scale(0.85) translateY(20px);
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         .modal-overlay.active .modal-content {
             transform: scale(1) translateY(0);
@@ -278,22 +435,46 @@
         }
 
         /* 响应式调整 */
-        @media (max-width: 600px) {
-            .container { padding: 20px 15px; }
-            .card { padding: 20px; }
-            .btn { padding: 10px 20px; font-size: 14px; }
-            .modal-content { padding: 25px 20px; }
+        @media (max-width: 720px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 30px 16px 20px;
+                align-content: start;
+                min-height: auto;
+            }
+            .card {
+                padding: 28px 22px;
+            }
+            .btn {
+                padding: 11px 22px;
+                font-size: 14px;
+            }
+            .modal-content {
+                padding: 25px 20px;
+            }
         }
     </style>
 </head>
 <body>
 
+    <!-- ==========================================
+         科技感动态背景层
+         ========================================== -->
+    <div class="bg-base"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-orb bg-orb-4"></div>
+    <div class="bg-orb bg-orb-5"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <!-- ==========================================
+         主内容区域
+         ========================================== -->
     <div class="container">
-        <!-- ==========================================
-             个人信息区块
-             ========================================== -->
+        <!-- 个人信息卡片 -->
         <section class="card profile-header fade-in-section">
-            <!-- 使用 B站默认头像 API 或占位图 -->
             <img src="https://images.weserv.nl/?url=https://i0.hdslb.com/bfs/face/member/noface.jpg&w=200&h=200" 
                  alt="Avatar" class="avatar" id="userAvatar"
                  onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwYTFkNiIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSI0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiI+8J+RuzwvdGV4dD48L3N2Zz4='">
@@ -307,9 +488,7 @@
             </div>
         </section>
 
-        <!-- ==========================================
-             资源领取区块
-             ========================================== -->
+        <!-- 资源领取卡片 -->
         <section class="card fade-in-section">
             <h2 class="section-title">专属资源福利</h2>
             <p class="resource-desc">
@@ -372,11 +551,14 @@
 
     <script>
         /* ==========================================
-           1. 页面载入与滚动交互动效 (IntersectionObserver)
+           1. 页面载入与滚动交互动效
            ========================================== */
         document.addEventListener('DOMContentLoaded', () => {
             // 动态设置当前年份
             document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+            // 生成背景粒子
+            generateParticles();
 
             // 滚动渐显动画观察器
             const observerOptions = {
@@ -389,7 +571,6 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
-                        // 触发一次后取消观察，提升性能
                         observer.unobserve(entry.target);
                     }
                 });
@@ -404,11 +585,29 @@
         });
 
         /* ==========================================
-           2. 浏览器环境判断模块 (B站内置浏览器检测)
+           背景粒子生成
+           ========================================== */
+        function generateParticles() {
+            const container = document.getElementById('bgParticles');
+            const count = 30;
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (8 + Math.random() * 15) + 's';
+                particle.style.animationDelay = (Math.random() * 10) + 's';
+                particle.style.width = (1 + Math.random() * 2) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.opacity = (0.2 + Math.random() * 0.5).toString();
+                container.appendChild(particle);
+            }
+        }
+
+        /* ==========================================
+           2. 浏览器环境判断模块
            ========================================== */
         function checkBiliBrowser() {
             const ua = navigator.userAgent.toLowerCase();
-            // 检测 B站客户端、小程序等内置环境的 UA 特征
             const isBiliBrowser = ua.includes('bilibili') || 
                                   ua.includes('biliapp') || 
                                   ua.includes('biliclient') ||
@@ -419,21 +618,18 @@
             }
         }
 
-        // 复制当前页面 URL 到剪贴板（自动适配当前测试站域名 test-website-demo.pages.dev）
         function copyCurrentUrl() {
             const url = window.location.href;
             copyTextToClipboard(url, '页面链接已复制！请打开系统浏览器粘贴访问。');
         }
 
         /* ==========================================
-           3. 资源领取逻辑（已删除24小时冷却限制，点击直接弹出资源）
+           3. 资源领取逻辑
            ========================================== */
         function handleClaim() {
-            // 直接弹出资源弹窗，无时间限制判断
             openModal('resourceModal');
         }
 
-        // 复制资源信息
         function copyResourceInfo() {
             const link = document.getElementById('panLink').textContent;
             const code = document.getElementById('panCode').textContent;
@@ -442,7 +638,7 @@
         }
 
         /* ==========================================
-           4. 通用工具函数 (弹窗控制 & 剪贴板)
+           4. 通用工具函数
            ========================================== */
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
@@ -476,7 +672,6 @@
             }
         }
 
-        // 降级复制方案
         function fallbackCopy(text, successMsg) {
             const textArea = document.createElement('textarea');
             textArea.value = text;
@@ -493,7 +688,7 @@
             document.body.removeChild(textArea);
         }
 
-        // 简易 Toast 提示
+        // Toast 提示
         function showToast(message) {
             let toast = document.getElementById('global-toast');
             if (!toast) {
@@ -501,7 +696,7 @@
                 toast.id = 'global-toast';
                 toast.style.cssText = `
                     position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-                    background: rgba(0,0,0,0.8); color: #fff; padding: 12px 24px; border-radius: 8px;
+                    background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px; border-radius: 8px;
                     font-size: 14px; z-index: 2000; opacity: 0; transition: all 0.3s ease; pointer-events: none;
                 `;
                 document.body.appendChild(toast);
