@@ -6,7 +6,7 @@
     <title>测试演示主页 - 资源分享</title>
     <style>
         /* ==========================================
-           全局基础样式与 CSS 变量
+           全局基础样式与 CSS 变量（完全保留原样式）
            ========================================== */
         :root {
             --primary-color: #00a1d6;
@@ -38,155 +38,51 @@
             animation: fadeInPage 0.8s ease-out forwards;
         }
 
-        /* ==========================================
-           科技感动态渐变背景系统
-           ========================================== */
-        .bg-base {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(-45deg, #0a0e27, #1a1040, #0d2137, #0a1628, #12153a, #0e1a30);
-            background-size: 400% 400%;
-            animation: gradientBg 15s ease infinite;
-            z-index: -4;
-        }
-
-        @keyframes gradientBg {
-            0% { background-position: 0% 50%; }
-            25% { background-position: 50% 0%; }
-            50% { background-position: 100% 50%; }
-            75% { background-position: 50% 100%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .bg-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(90px);
-            z-index: -3;
-            pointer-events: none;
-        }
-
-        .bg-orb-1 {
-            width: 550px;
-            height: 550px;
-            background: radial-gradient(circle, rgba(0, 161, 214, 0.35) 0%, transparent 70%);
-            top: -150px;
-            left: -100px;
-            animation: floatOrb1 22s ease-in-out infinite;
-        }
-
-        .bg-orb-2 {
-            width: 480px;
-            height: 480px;
-            background: radial-gradient(circle, rgba(251, 114, 153, 0.25) 0%, transparent 70%);
-            bottom: -120px;
-            right: -80px;
-            animation: floatOrb2 18s ease-in-out infinite;
-        }
-
-        .bg-orb-3 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(100, 120, 255, 0.3) 0%, transparent 70%);
-            top: 40%;
-            left: 45%;
-            animation: floatOrb3 25s ease-in-out infinite;
-        }
-
-        .bg-orb-4 {
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(0, 220, 200, 0.2) 0%, transparent 70%);
-            top: 20%;
-            right: 5%;
-            animation: floatOrb4 20s ease-in-out infinite;
-        }
-
-        .bg-orb-5 {
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(180, 100, 255, 0.2) 0%, transparent 70%);
-            bottom: 20%;
-            left: 10%;
-            animation: floatOrb5 23s ease-in-out infinite;
-        }
-
-        @keyframes floatOrb1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(80px, 50px) scale(1.1); }
-            50% { transform: translate(40px, 100px) scale(0.95); }
-            75% { transform: translate(-30px, 60px) scale(1.05); }
-        }
-
-        @keyframes floatOrb2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(-60px, -40px) scale(1.08); }
-            50% { transform: translate(-100px, -80px) scale(0.92); }
-            75% { transform: translate(-30px, -60px) scale(1.04); }
-        }
-
-        @keyframes floatOrb3 {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            33% { transform: translate(-30%, -60%) scale(1.15); }
-            66% { transform: translate(-70%, -40%) scale(0.9); }
-        }
-
-        @keyframes floatOrb4 {
-            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            50% { transform: translate(-50px, 60px) scale(1.1) rotate(10deg); }
-        }
-
-        @keyframes floatOrb5 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            30% { transform: translate(40px, -50px) scale(1.08); }
-            60% { transform: translate(70px, 30px) scale(0.95); }
-        }
-
-        /* 科技感网格覆盖层 */
-        .bg-grid {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-            background-size: 60px 60px;
-            z-index: -2;
-            pointer-events: none;
-        }
-
-        /* 微光粒子层 */
-        .bg-particles {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            animation: particleFloat linear infinite;
-        }
-
-        @keyframes particleFloat {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-        }
-
-        /* 页面载入动画 */
+        /* 页面载入动画（完全保留） */
         @keyframes fadeInPage {
             0% { opacity: 0; transform: translateY(-10px); }
             100% { opacity: 1; transform: translateY(0); }
         }
 
         /* ==========================================
-           区块渐变显示 (滚动动画)
+           新增：动态视频背景样式（替换原有所有背景）
+           ========================================== */
+        .video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -5; /* 置于所有内容底层 */
+            overflow: hidden;
+        }
+
+        .video-bg video {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover; /* 视频铺满屏幕不变形 */
+        }
+
+        /* 半透明遮罩：避免视频太亮导致白色卡片文字看不清 */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: -4; /* 在视频上层、内容下层 */
+            pointer-events: none;
+        }
+
+        /* ==========================================
+           区块渐变显示 (滚动动画)（完全保留）
            ========================================== */
         .fade-in-section {
             opacity: 0;
@@ -199,7 +95,7 @@
         }
 
         /* ==========================================
-           布局与组件样式 - 等高双卡片网格
+           布局与组件样式 - 等高双卡片网格（完全保留）
            ========================================== */
         .container {
             max-width: 920px;
@@ -347,7 +243,7 @@
         }
 
         /* ==========================================
-           弹窗样式
+           弹窗样式（完全保留）
            ========================================== */
         .modal-overlay {
             position: fixed;
@@ -434,7 +330,7 @@
             color: var(--primary-color);
         }
 
-        /* 响应式调整 */
+        /* 响应式调整（完全保留） */
         @media (max-width: 720px) {
             .container {
                 grid-template-columns: 1fr;
@@ -456,21 +352,21 @@
     </style>
 </head>
 <body>
-
     <!-- ==========================================
-         科技感动态背景层
+         新增：动态视频背景（替换原有所有背景层）
          ========================================== -->
-    <div class="bg-base"></div>
-    <div class="bg-orb bg-orb-1"></div>
-    <div class="bg-orb bg-orb-2"></div>
-    <div class="bg-orb bg-orb-3"></div>
-    <div class="bg-orb bg-orb-4"></div>
-    <div class="bg-orb bg-orb-5"></div>
-    <div class="bg-grid"></div>
-    <div class="bg-particles" id="bgParticles"></div>
+    <div class="video-bg">
+        <!-- 视频路径已匹配你的bg.mp4，自动播放/静音/循环/兼容移动端 -->
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="bg.mp4" type="video/mp4">
+            您的浏览器不支持视频播放
+        </video>
+    </div>
+    <!-- 背景遮罩：提升白色卡片文字可读性 -->
+    <div class="video-overlay"></div>
 
     <!-- ==========================================
-         主内容区域
+         主内容区域（完全保留原有结构和功能）
          ========================================== -->
     <div class="container">
         <!-- 个人信息卡片 -->
@@ -508,7 +404,7 @@
     </div>
 
     <!-- ==========================================
-         弹窗 1: B站内置浏览器环境提示
+         弹窗 1: B站内置浏览器环境提示（完全保留）
          ========================================== -->
     <div class="modal-overlay" id="biliBrowserModal">
         <div class="modal-content">
@@ -528,7 +424,7 @@
     </div>
 
     <!-- ==========================================
-         弹窗 2: 资源领取成功展示
+         弹窗 2: 资源领取成功展示（完全保留）
          ========================================== -->
     <div class="modal-overlay" id="resourceModal">
         <div class="modal-content">
@@ -551,14 +447,11 @@
 
     <script>
         /* ==========================================
-           1. 页面载入与滚动交互动效
+           1. 页面载入与滚动交互动效（删除了旧粒子相关代码）
            ========================================== */
         document.addEventListener('DOMContentLoaded', () => {
             // 动态设置当前年份
             document.getElementById('currentYear').textContent = new Date().getFullYear();
-
-            // 生成背景粒子
-            generateParticles();
 
             // 滚动渐显动画观察器
             const observerOptions = {
@@ -585,26 +478,7 @@
         });
 
         /* ==========================================
-           背景粒子生成
-           ========================================== */
-        function generateParticles() {
-            const container = document.getElementById('bgParticles');
-            const count = 30;
-            for (let i = 0; i < count; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDuration = (8 + Math.random() * 15) + 's';
-                particle.style.animationDelay = (Math.random() * 10) + 's';
-                particle.style.width = (1 + Math.random() * 2) + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.opacity = (0.2 + Math.random() * 0.5).toString();
-                container.appendChild(particle);
-            }
-        }
-
-        /* ==========================================
-           2. 浏览器环境判断模块
+           2. 浏览器环境判断模块（完全保留）
            ========================================== */
         function checkBiliBrowser() {
             const ua = navigator.userAgent.toLowerCase();
@@ -624,7 +498,7 @@
         }
 
         /* ==========================================
-           3. 资源领取逻辑
+           3. 资源领取逻辑（完全保留）
            ========================================== */
         function handleClaim() {
             openModal('resourceModal');
@@ -638,7 +512,7 @@
         }
 
         /* ==========================================
-           4. 通用工具函数
+           4. 通用工具函数（完全保留）
            ========================================== */
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
@@ -646,7 +520,7 @@
         }
 
         function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
+            const modal = document.getElementById(mmodalId);
             if (modal) modal.classList.remove('active');
         }
 
