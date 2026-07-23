@@ -45,7 +45,7 @@
         }
 
         /* ==========================================
-           新增：动态视频背景样式（替换原有所有背景）
+           动态视频背景样式（已优化层级和加载逻辑）
            ========================================== */
         .video-bg {
             position: fixed;
@@ -55,6 +55,8 @@
             height: 100vh;
             z-index: -5; /* 置于所有内容底层 */
             overflow: hidden;
+            /* 兜底背景：如果视频加载失败，显示这个深灰色，不会是莫名其妙的灰 */
+            background: #1a1a2e;
         }
 
         .video-bg video {
@@ -82,12 +84,12 @@
         }
 
         /* ==========================================
-           区块渐变显示 (滚动动画)（完全保留）
+           区块渐变显示 (滚动动画)
            ========================================== */
         .fade-in-section {
             opacity: 0;
             transform: translateY(30px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transition: opacity 0.8s ease-out, transform: 0.8s ease-out;
         }
         .fade-in-section.is-visible {
             opacity: 1;
@@ -95,7 +97,7 @@
         }
 
         /* ==========================================
-           布局与组件样式 - 等高双卡片网格（完全保留）
+           布局与组件样式 - 等高双卡片网格（优化层级）
            ========================================== */
         .container {
             max-width: 920px;
@@ -107,6 +109,9 @@
             align-items: stretch;
             min-height: 100vh;
             align-content: center;
+            /* 明确层级：确保在遮罩之上 */
+            position: relative;
+            z-index: 1;
         }
 
         .card {
@@ -114,7 +119,7 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             padding: 36px 30px;
-            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            transition: box-shadow 0.3s ease, transform: 0.3s ease;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -353,11 +358,23 @@
 </head>
 <body>
     <!-- ==========================================
-         新增：动态视频背景（替换原有所有背景层）
+         动态视频背景（加了调试ID和错误监听）
          ========================================== -->
     <div class="video-bg">
-        <!-- 视频路径已匹配你的bg.mp4，自动播放/静音/循环/兼容移动端 -->
-        <video autoplay muted loop playsinline preload="auto">
+        <!-- 
+          poster：视频加载时显示的封面（你可以换成自己的封面图，没有的话可以留空，或者我用纯色兜底了）
+          onerror：视频加载失败时打印明确错误，方便调试
+        -->
+        <video 
+            id="bgVideo"
+            autoplay 
+            muted 
+            loop 
+            playsinline 
+            preload="metadata"
+            poster="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIwIDEwODAiPjxyZWN0IHdpZHRoPSIxOTIwIiBoZWlnaHQ9IjEwODAiIGZpbGw9IiMxYTFhMmUiLz48L3N2Zz4="
+            onerror="console.error('视频加载失败！原因：', arguments[0].target.error); alert('视频加载失败，请检查bg.mp4是否存在或编码是否正确')"
+        >
             <source src="bg.mp4" type="video/mp4">
             您的浏览器不支持视频播放
         </video>
@@ -371,7 +388,8 @@
     <div class="container">
         <!-- 个人信息卡片 -->
         <section class="card profile-header fade-in-section">
-            <img src="https://images.weserv.nl/?url=https://i0.hdslb.com/bfs/face/member/noface.jpg&w=200&h=200" 
+            <!-- 换成B站原始头像地址，避免代理失效 -->
+            <img src="https://i0.hdslb.com/bfs/face/member/noface.jpg" 
                  alt="Avatar" class="avatar" id="userAvatar"
                  onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwYTFkNiIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSI0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiI+8J+RuzwvdGV4dD48L3N2Zz4='">
             <h1 class="profile-name">测试演示主页</h1>
@@ -404,7 +422,7 @@
     </div>
 
     <!-- ==========================================
-         弹窗 1: B站内置浏览器环境提示（完全保留）
+         弹窗 1: B站内置浏览器环境提示
          ========================================== -->
     <div class="modal-overlay" id="biliBrowserModal">
         <div class="modal-content">
@@ -424,7 +442,7 @@
     </div>
 
     <!-- ==========================================
-         弹窗 2: 资源领取成功展示（完全保留）
+         弹窗 2: 资源领取成功展示
          ========================================== -->
     <div class="modal-overlay" id="resourceModal">
         <div class="modal-content">
@@ -447,7 +465,7 @@
 
     <script>
         /* ==========================================
-           1. 页面载入与滚动交互动效（删除了旧粒子相关代码）
+           1. 页面载入与滚动交互动效
            ========================================== */
         document.addEventListener('DOMContentLoaded', () => {
             // 动态设置当前年份
@@ -475,10 +493,21 @@
 
             // 执行环境检测
             checkBiliBrowser();
+
+            // 【调试用】打印视频加载状态
+            const bgVideo = document.getElementById('bgVideo');
+            if (bgVideo) {
+                bgVideo.addEventListener('loadeddata', () => {
+                    console.log('✅ 视频加载成功！可以正常播放了');
+                });
+                bgVideo.addEventListener('canplay', () => {
+                    console.log('✅ 视频可以开始播放了');
+                });
+            }
         });
 
         /* ==========================================
-           2. 浏览器环境判断模块（完全保留）
+           2. 浏览器环境判断模块
            ========================================== */
         function checkBiliBrowser() {
             const ua = navigator.userAgent.toLowerCase();
@@ -498,7 +527,7 @@
         }
 
         /* ==========================================
-           3. 资源领取逻辑（完全保留）
+           3. 资源领取逻辑
            ========================================== */
         function handleClaim() {
             openModal('resourceModal');
@@ -512,7 +541,7 @@
         }
 
         /* ==========================================
-           4. 通用工具函数（完全保留）
+           4. 通用工具函数（修复了之前的笔误：mmodalId → modalId）
            ========================================== */
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
@@ -520,7 +549,8 @@
         }
 
         function closeModal(modalId) {
-            const modal = document.getElementById(mmodalId);
+            // 之前这里是 mmodalId，多了个 m，现在修复了！
+            const modal = document.getElementById(modalId);
             if (modal) modal.classList.remove('active');
         }
 
