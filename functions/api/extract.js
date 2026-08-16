@@ -1,25 +1,29 @@
 /**
  * GET /api/extract?url=<目标网址>
  *
- * 服务端（Cloudflare 边缘）抓取目标页面 HTML，按优先级解析 favicon 地址。
- * 抓取失败（如目标站 WAF 拦截数据中心 IP、SPA 无声明）时逐级兜底：
- *   站点根目录 /favicon.ico → Google S2 图标服务 → DuckDuckGo 图标服务
- *   （图标服务均尝试「完整域名 → 主域名」两级，覆盖子域名站点）
- * 前端不调用任何外部公共代理，也不直连被墙域名。
+ * 服务端（Cloudflare 边缘）按以下顺序解析 favicon，命中即停：
+ *   1. 抓取目标页 HTML，解析 <link rel> 原生图标地址
+ *   2. 并行探测站点原生路径：完整域名 + 主域名 × /favicon.ico|.png|.svg、/apple-touch-icon.png
+ *   3. Google S2 → DuckDuckGo 图标缓存（最后兜底）
  *
- * 返回 JSON：{ ok, url, preview, source, trace }
- *   trace 为各步骤执行轨迹，便于排查失败原因。
+ * 关键约束：返回给用户复制的 url 永远「国内可达」——
+ *   原生命中 → 站点自己域名下的地址；
+ *   图标服务兜底 → 改写为本站 /api/icon 绝对代理地址（不再输出 Google 直链）。
+ *
+ * 返回 JSON：{ ok, url, preview, source, fallback, trace }
+ *   fallback=true 表示来自图标缓存且地址已代理化；前端可据此再尝试浏览器直探原生路径。
  */
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 export async function onRequestGet(context) {
-    const { searchParams } = new URL(context.request.url);
+    const reqUrl = new URL(context.request.url);
+    const myOrigin = reqUrl.origin; /* 用于构造本站绝对代理地址 */
     const trace = [];
 
     let target;
     try {
-        const raw = (searchParams.get('url') || '').trim();
+        const raw = (reqUrl.searchParams.get('url') || '').trim();
         if (!raw) return json({ ok: false, error: '缺少 url 参数' }, 400);
         target = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
     } catch (e) {
@@ -29,7 +33,9 @@ export async function onRequestGet(context) {
         return json({ ok: false, error: '仅支持公网 http/https 网址' }, 400);
     }
 
-    /* 1. 抓取页面 HTML，解析 <link rel> */
+    const hosts = dedupe([target.hostname, rootDomain(target.hostname)]);
+
+    /* 1. 抓取页面 HTML，解析 <link rel> 原生图标 */
     try {
         const res = await fetch(target.href, {
             headers: {
@@ -43,14 +49,15 @@ export async function onRequestGet(context) {
         if (res.ok) {
             const finalUrl = res.url || target.href; /* 以重定向后的地址解析相对路径 */
             let html = await res.text();
-            if (html.length > 500000) html = html.slice(0, 500000); /* 只需 head 区，截断防超大页面 */
+            if (html.length > 500000) html = html.slice(0, 500000);
             const found = pickIcon(parseLinks(html), finalUrl);
             if (found) {
                 return json({
                     ok: true,
                     url: found.url,
-                    preview: previewFor(found.url),
+                    preview: proxyUrl(myOrigin, found.url),
                     source: '页面解析 rel="' + found.rel + '"',
+                    fallback: false,
                     trace: trace.concat('页面解析成功 rel=' + found.rel)
                 });
             }
@@ -62,31 +69,45 @@ export async function onRequestGet(context) {
         trace.push('页面请求失败: ' + (e && e.name === 'TimeoutError' ? '超时' : '网络错误'));
     }
 
-    /* 2. 站点根目录 /favicon.ico */
-    const guess = new URL('/favicon.ico', target.origin).href;
-    const guessResult = await imageOk(guess);
-    trace.push('/favicon.ico: ' + guessResult.msg);
-    if (guessResult.ok) {
-        return json({ ok: true, url: guess, preview: previewFor(guess), source: '站点默认路径 /favicon.ico', trace });
+    /* 2. 并行探测站点原生路径（完整域名 + 主域名），命中即为站点自己的地址 */
+    const paths = ['/favicon.ico', '/favicon.png', '/favicon.svg', '/apple-touch-icon.png'];
+    const natives = [];
+    for (const h of hosts) for (const p of paths) natives.push('https://' + h + p);
+    const probes = await Promise.all(natives.map(function(u) { return imageOk(u, 5000); }));
+    for (let i = 0; i < natives.length; i++) {
+        if (probes[i].ok) {
+            trace.push('原生路径命中: ' + natives[i]);
+            return json({
+                ok: true,
+                url: natives[i],
+                preview: proxyUrl(myOrigin, natives[i]),
+                source: '站点原生路径 ' + natives[i].replace(/^https?:\/\//, ''),
+                fallback: false,
+                trace: trace
+            });
+        }
     }
+    trace.push('原生路径(' + natives.length + '个)探测均未命中');
 
-    /* 3. 公共图标服务兜底：完整域名 → 主域名，Google S2 → DuckDuckGo */
-    const hosts = dedupe([target.hostname, rootDomain(target.hostname)]);
+    /* 3. 图标缓存服务兜底：地址一律改写为本站代理，保证复制出去可打开 */
     const services = [
-        { name: 'Google 图标服务', make: function(h) { return 'https://www.google.com/s2/favicons?domain=' + h + '&sz=64'; } },
-        { name: 'DuckDuckGo 图标服务', make: function(h) { return 'https://icons.duckduckgo.com/ip3/' + h + '.ico'; } }
+        { name: 'Google 图标缓存', make: function(h) { return 'https://www.google.com/s2/favicons?domain=' + h + '&sz=64'; } },
+        { name: 'DuckDuckGo 图标缓存', make: function(h) { return 'https://icons.duckduckgo.com/ip3/' + h + '.ico'; } }
     ];
     for (const svc of services) {
         for (const h of hosts) {
             const cand = svc.make(h);
-            const r = await imageOk(cand);
+            const r = await imageOk(cand, 6000);
             if (r.ok) {
+                trace.push(svc.name + '命中(' + h + ')，地址已代理化');
+                const via = proxyUrl(myOrigin, cand);
                 return json({
                     ok: true,
-                    url: cand,
-                    preview: previewFor(cand),
-                    source: svc.name + ' · ' + h + '（兜底）',
-                    trace: trace.concat(svc.name + '命中: ' + cand)
+                    url: via,
+                    preview: via,
+                    source: svc.name + ' · ' + h + '（经本站代理）',
+                    fallback: true,
+                    trace: trace
                 });
             }
             trace.push(svc.name + '(' + h + '): ' + r.msg);
@@ -108,18 +129,18 @@ function json(obj, status) {
     });
 }
 
-function previewFor(url) {
-    /* 图标预览/打开走同域图片代理，被墙域名也能正常显示 */
-    return '/api/icon?url=' + encodeURIComponent(url);
+/* 构造本站 /api/icon 绝对代理地址 */
+function proxyUrl(origin, url) {
+    return origin + '/api/icon?url=' + encodeURIComponent(url);
 }
 
 /* 探测候选地址是否为可用图片，返回 { ok, msg } 便于轨迹记录 */
-async function imageOk(url) {
+async function imageOk(url, timeoutMs) {
     try {
         const res = await fetch(url, {
             headers: { 'user-agent': UA, 'accept': 'image/*,*/*;q=0.8' },
             redirect: 'follow',
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(timeoutMs || 8000)
         });
         const ct = res.headers.get('content-type') || '';
         let msg;

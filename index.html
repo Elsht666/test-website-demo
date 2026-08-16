@@ -202,7 +202,7 @@
 
     <footer>
         抓取与图标转发由 Cloudflare Pages Functions 同域完成（/api/extract · /api/icon）<br>
-        提取优先级：rel="icon" → rel="shortcut icon" → rel="apple-touch-icon" → /favicon.ico → DuckDuckGo 图标
+        提取优先级：页面解析 rel="icon" → 站点原生路径 → 浏览器本地探测 → 图标缓存（经本站代理，不出 Google 直链）
     </footer>
 </main>
 
@@ -240,8 +240,8 @@
 
     function showResult(data) {
         iconPreview.onerror = function() { iconPreview.src = PLACEHOLDER; };
-        iconPreview.src = data.preview;   /* 同域代理地址，被墙图标也能显示 */
-        iconUrl.textContent = data.url;   /* 真实完整图标地址，供复制 */
+        iconPreview.src = data.preview;   /* 预览地址（原生或本站代理） */
+        iconUrl.textContent = data.url;   /* 复制地址：始终为国内可达的原生地址或本站代理地址 */
         linkVisit.href = data.preview;
         sourceNote.textContent = data.source ? '来源：' + data.source : '';
         resultCard.classList.remove('hidden');
@@ -266,6 +266,49 @@
         return ok;
     }
 
+    /* ---------- 浏览器直探原生路径（借鉴 Dashboard 做法） ---------- */
+    /* <img> 加载不受 CORS 限制；国内浏览器可达目标站时（CF 反而可能被对方 WAF 拦），
+       依次探测 完整域名+主域名 × 常见图标路径，命中即得到站点原生地址 */
+
+    function rootDomain(h) {
+        var m = h.toLowerCase().match(/([a-z0-9-]+\.(?:com|net|org|gov|edu|ac|co)\.[a-z]{2})$/);
+        if (m) return m[1];
+        m = h.toLowerCase().match(/([a-z0-9-]+\.[a-z]{2,})$/);
+        return m ? m[1] : h;
+    }
+
+    function probeImg(url) {
+        return new Promise(function(resolve) {
+            var img = new Image();
+            var done = false;
+            function finish(ok) {
+                if (done) return;
+                done = true;
+                img.onload = img.onerror = null;
+                resolve(ok);
+            }
+            var t = setTimeout(function() { finish(false); }, 6000);
+            img.onload = function() { clearTimeout(t); finish(true); };
+            img.onerror = function() { clearTimeout(t); finish(false); };
+            img.src = url;
+        });
+    }
+
+    function browserProbeIcon(target) {
+        var origins = [target.origin];
+        var rd = rootDomain(target.hostname);
+        if (rd !== target.hostname) origins.push('https://' + rd);
+        var paths = ['/favicon.ico', '/favicon.png', '/apple-touch-icon.png'];
+        var candidates = [];
+        origins.forEach(function(o) { paths.forEach(function(p) { candidates.push(o + p); }); });
+        return Promise.all(candidates.map(probeImg)).then(function(results) {
+            for (var i = 0; i < candidates.length; i++) {
+                if (results[i]) return candidates[i];
+            }
+            return '';
+        });
+    }
+
     function extract() {
         clearError();
         resultCard.classList.add('hidden');
@@ -288,12 +331,20 @@
                 return res.json().catch(function() { return null; }).then(function(data) { return { res: res, data: data }; });
             })
             .then(function(r) {
-                if (!r.res.ok || !r.data || !r.data.ok) {
-                    var msg = (r.data && r.data.error) ? r.data.error : '未找到图标，请检查网址是否正确';
-                    showError(msg);
-                    return;
-                }
-                showResult(r.data);
+                var data = r.data && r.data.ok ? r.data : null;
+
+                /* 服务端拿到原生地址 → 直接采用 */
+                if (data && !data.fallback) { showResult(data); return null; }
+
+                /* 服务端只有图标缓存兜底 / 完全失败 → 浏览器先直探站点原生路径 */
+                return browserProbeIcon(target).then(function(nativeUrl) {
+                    if (nativeUrl) {
+                        showResult({ url: nativeUrl, preview: nativeUrl, source: '本地探测 ' + nativeUrl.replace(/^https?:\/\//, '') });
+                        return null;
+                    }
+                    if (data) { showResult(data); return null; } /* 接受已代理化的兜底结果 */
+                    showError((r.data && r.data.error) ? r.data.error : '未找到图标，请检查网址是否正确');
+                });
             })
             .catch(function() {
                 showError('请求失败，请检查网络后重试');
