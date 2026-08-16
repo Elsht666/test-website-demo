@@ -9,17 +9,28 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-        --fg: #171717;
-        --fg-muted: #666;
-        --fg-faint: #999;
-        --border: #e5e5e5;
-        --card: #fff;
-        --bg: #fafafa;
-        --accent: #0070f3;
+        --fg: #0f172a;
+        --fg-muted: #64748b;
+        --fg-faint: #94a3b8;
+        --border: #e2e8f0;
+        --card: #ffffff;
+        --bg: #f4f6fb;
+        --accent: #4f6ef7;
+        --accent-deep: #3b5bdb;
+        --accent-soft: rgba(79, 110, 247, .14);
+        --code-bg: #0f172a;
+        --code-fg: #cbd5e1;
         --danger-bg: #fef2f2;
         --danger-border: #fecaca;
-        --danger-fg: #dc2626;
+        --danger-fg: #b91c1c;
+        --ok: #059669;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --radius-sm: 10px;
+        --shadow-card: 0 1px 2px rgba(15, 23, 42, .05), 0 12px 32px -12px rgba(15, 23, 42, .18);
     }
+
+    html { -webkit-text-size-adjust: 100%; }
 
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
@@ -29,68 +40,123 @@
         min-height: 100vh;
         display: flex;
         justify-content: center;
-        padding: 48px 16px;
+        padding: clamp(32px, 6vw, 64px) 16px;
+        position: relative;
+        overflow-x: hidden;
     }
 
-    .container { width: 100%; max-width: 640px; }
+    /* 背景装饰光斑 */
+    body::before, body::after {
+        content: "";
+        position: fixed;
+        z-index: -1;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: .55;
+        pointer-events: none;
+    }
+    body::before {
+        width: 480px; height: 480px;
+        background: rgba(79, 110, 247, .16);
+        top: -160px; right: -120px;
+    }
+    body::after {
+        width: 420px; height: 420px;
+        background: rgba(129, 140, 248, .14);
+        bottom: -140px; left: -120px;
+    }
 
-    header { text-align: center; margin-bottom: 28px; }
-    header h1 { font-size: 24px; font-weight: 700; letter-spacing: -.3px; }
-    header p { font-size: 14px; color: var(--fg-muted); margin-top: 8px; }
+    .container { width: 100%; max-width: 620px; }
+
+    header { text-align: center; margin-bottom: 32px; }
+    header h1 {
+        font-size: clamp(22px, 4.5vw, 28px);
+        font-weight: 800;
+        letter-spacing: -.5px;
+        background: linear-gradient(120deg, #0f172a 30%, var(--accent-deep));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    header p {
+        font-size: 14px;
+        color: var(--fg-muted);
+        margin-top: 12px;
+        display: inline-block;
+        padding: 6px 16px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+    }
 
     .card {
         background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        box-shadow: var(--shadow-card);
     }
 
-    .input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
     #urlInput {
-        flex: 1 1 200px;
+        flex: 1 1 220px;
         min-width: 0;
-        height: 42px;
-        padding: 0 14px;
+        height: 46px;
+        padding: 0 15px;
         font-size: 14px;
+        font-family: inherit;
+        color: var(--fg);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         outline: none;
-        transition: border-color .15s, box-shadow .15s;
+        background: #fbfcfe;
+        transition: border-color .15s, box-shadow .15s, background .15s;
     }
+    #urlInput:hover { border-color: #cbd5e1; }
     #urlInput:focus {
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(0,112,243,.15);
+        background: #fff;
+        box-shadow: 0 0 0 4px var(--accent-soft);
     }
-    #urlInput::placeholder { color: #aaa; }
+    #urlInput::placeholder { color: #a8b3c5; }
 
     button {
         font-family: inherit;
         cursor: pointer;
         border: 0;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: background .15s, opacity .15s;
+        font-weight: 600;
+        transition: background .15s, border-color .15s, color .15s,
+                    transform .12s, box-shadow .15s, filter .15s;
         -webkit-user-select: none;
         user-select: none;
+        touch-action: manipulation;
     }
-    button:disabled { cursor: not-allowed; opacity: .6; }
+    button:disabled { cursor: not-allowed; opacity: .65; }
+    button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
 
     #btnExtract {
-        height: 42px;
-        padding: 0 22px;
-        font-size: 14px;
-        background: var(--fg);
+        height: 46px;
+        padding: 0 24px;
+        font-size: 14.5px;
         color: #fff;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, #5b7cfa, var(--accent-deep));
+        box-shadow: 0 6px 16px -6px rgba(59, 91, 219, .55);
         display: inline-flex;
         align-items: center;
         gap: 8px;
     }
-    #btnExtract:hover:not(:disabled) { background: #333; }
+    #btnExtract:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px -6px rgba(59, 91, 219, .6);
+        filter: saturate(1.1);
+    }
+    #btnExtract:active:not(:disabled) { transform: translateY(0) scale(.97); }
 
     .spinner {
         width: 14px; height: 14px;
-        border: 2px solid rgba(255,255,255,.35);
+        border: 2px solid rgba(255, 255, 255, .35);
         border-top-color: #fff;
         border-radius: 50%;
         animation: spin .7s linear infinite;
@@ -101,75 +167,109 @@
 
     .error {
         margin-top: 14px;
-        padding: 10px 12px;
+        padding: 12px 14px;
         font-size: 13px;
-        line-height: 1.5;
+        line-height: 1.55;
         background: var(--danger-bg);
         border: 1px solid var(--danger-border);
         color: var(--danger-fg);
-        border-radius: 8px;
+        border-radius: var(--radius-md);
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        animation: fadeUp .3s cubic-bezier(.2, .8, .3, 1);
+    }
+    .error::before { content: "⚠️"; flex: none; }
+
+    .result {
+        margin-top: 16px;
+        animation: fadeUp .35s cubic-bezier(.2, .8, .3, 1);
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
     }
 
-    .result { margin-top: 16px; }
-    .result-head { display: flex; align-items: center; gap: 14px; }
+    .result-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
     #iconPreview {
-        width: 48px; height: 48px;
+        width: 56px; height: 56px;
         flex: none;
         object-fit: contain;
         border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 3px;
-        background: #fff;
+        border-radius: var(--radius-md);
+        padding: 4px;
+        /* 棋盘底衬托透明图标 */
+        background: repeating-conic-gradient(#f1f5f9 0 25%, #fff 0 50%) 0 0 / 12px 12px;
     }
     .result-url {
-        flex: 1;
+        flex: 1 1 260px;
         min-width: 0;
         font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
-        font-size: 13px;
-        line-height: 1.5;
+        font-size: 12.5px;
+        line-height: 1.6;
         word-break: break-all;
-        background: #f5f5f5;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        padding: 10px 12px;
+        background: var(--code-bg);
+        color: var(--code-fg);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+        box-shadow: inset 0 1px 4px rgba(0, 0, 0, .4);
     }
 
     .result-actions {
-        margin-top: 14px;
+        margin-top: 16px;
         display: flex;
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
     }
     #btnCopy {
-        height: 36px;
-        padding: 0 16px;
+        height: 38px;
+        padding: 0 18px;
         font-size: 13px;
         background: #fff;
         border: 1px solid var(--border);
         color: var(--fg);
+        border-radius: var(--radius-sm);
     }
-    #btnCopy:hover { background: #f5f5f5; }
-    #btnCopy.copied { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+    #btnCopy:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }
+    #btnCopy:active:not(:disabled) { transform: scale(.97); }
+    #btnCopy.copied { border-color: #34d399; color: var(--ok); background: #ecfdf5; }
 
     #linkVisit {
         font-size: 13px;
-        color: var(--accent);
+        font-weight: 600;
+        color: var(--accent-deep);
         text-decoration: none;
     }
-    #linkVisit:hover { text-decoration: underline; }
+    #linkVisit:hover { text-decoration: underline; text-underline-offset: 3px; }
 
     #sourceNote { font-size: 12px; color: var(--fg-faint); }
 
     footer {
-        margin-top: 28px;
+        margin-top: 32px;
         text-align: center;
         font-size: 12px;
         color: var(--fg-faint);
-        line-height: 1.8;
+        line-height: 1.9;
     }
 
     .hidden { display: none !important; }
+
+    @media (max-width: 520px) {
+        .card { padding: 16px; border-radius: 14px; }
+        header { margin-bottom: 24px; }
+        header p { font-size: 13px; padding: 5px 12px; }
+        #urlInput { height: 48px; font-size: 16px; } /* ≥16px 防止 iOS 聚焦自动放大 */
+        #urlInput, #btnExtract { border-radius: var(--radius-sm); }
+        #btnExtract { flex: 1 1 100%; justify-content: center; } /* 窄屏按钮独占一行 */
+        #iconPreview { width: 44px; height: 44px; }
+        .result-head, .result-actions { gap: 10px; }
+        body::before, body::after { opacity: .35; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
 </style>
 </head>
 <body>
@@ -201,8 +301,8 @@
     </div>
 
     <footer>
-        抓取与图标转发由 Cloudflare Pages Functions 同域完成（/api/extract · /api/icon）<br>
-        提取优先级：页面解析 rel="icon" → 站点原生路径 → 浏览器本地探测 → 图标缓存（经本站代理，不出 Google 直链）
+        网站工具抓取与图标转发由 Cloudflare Pages Functions 同域完成。<br>
+        优先级：页面解析 rel="icon" → 站点原生路径 → 浏览器<br> 本地探测→ 图标缓存（经本站代理，不出 Google 直链）
     </footer>
 </main>
 
@@ -309,6 +409,15 @@
         });
     }
 
+    /* ---------- 输入规范化：自动补协议，防止重复叠加 ---------- */
+    function normalizeUrl(text) {
+        var s = text.replace(/\s+/g, '');              /* 去除首尾及内部空白（粘贴带入的空格/换行） */
+        s = s.replace(/^(https?):\/(?!\/)/i, '$1://'); /* 修正手误 http:/x → http://x */
+        if (/^https?:\/\//i.test(s)) { return s; }     /* 已带协议，不额外处理 */
+        if (s.indexOf('//') === 0) { return 'https:' + s; } /* //x → https://x */
+        return 'https://' + s;                         /* 裸域名自动拼接 https:// */
+    }
+
     function extract() {
         clearError();
         resultCard.classList.add('hidden');
@@ -318,7 +427,7 @@
 
         var target;
         try {
-            target = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+            target = new URL(normalizeUrl(raw));
         } catch (e) {
             showError('网址格式不正确，请检查后重试');
             return;
@@ -370,6 +479,32 @@
         });
     });
 })();
+</script>
+<script>
+    /* ==================== 网页防护 ==================== */
+    (function() {
+        'use strict';
+        /* 拦截快捷键：F12、Ctrl+S、Ctrl+U、Ctrl+Shift+I/J/C 等 */
+        document.addEventListener('keydown', function(e) {
+            var key = e.key || '';
+            var blocked = false;
+            if (key === 'F12') { blocked = true; }
+            else if ((e.ctrlKey || e.metaKey) && !e.altKey && (key === 's' || key === 'S' || key === 'u' || key === 'U')) { blocked = true; }
+            else if ((e.ctrlKey || e.metaKey) && e.shiftKey && (key === 'I' || key === 'i' || key === 'J' || key === 'j' || key === 'C' || key === 'c')) { blocked = true; }
+            if (blocked) { e.preventDefault(); e.stopPropagation(); return false; }
+        }, true);
+        /* 屏蔽右键菜单 */
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); }, true);
+        /* 反调试：debugger 检测循环（打开控制台时触发中断） */
+        function antiDebug() {
+            setInterval(function() {
+                var before = Date.now();
+                debugger;
+                if (Date.now() - before > 100) { document.body.innerHTML = ''; }
+            }, 2000);
+        }
+        antiDebug();
+    })();
 </script>
 </body>
 </html>
