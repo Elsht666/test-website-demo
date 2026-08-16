@@ -18,8 +18,9 @@ favicon-tool/
 
 1. 前端 `GET /api/extract?url=<目标网址>`（同域，无跨域问题）
 2. 边缘服务端抓取目标站 HTML → 按 `rel="icon"` → `rel="shortcut icon"` → `rel="apple-touch-icon"` 优先级解析，相对路径自动转绝对地址
-3. 页面解析失败 → 探测站点 `/favicon.ico` → DuckDuckGo 图标服务（`icons.duckduckgo.com`，全部在 CF 服务端完成）
-4. 返回 `{ url: 真实图标地址, preview: /api/icon 同域预览地址, source: 来源 }`；前端预览与"新标签页打开"走 `/api/icon` 转发，浏览器不直连被墙域名
+3. 页面解析失败 → 探测站点 `/favicon.ico` → Google S2 → DuckDuckGo 图标服务（均尝试「完整域名 → 主域名」两级，全部在 CF 服务端完成，用于目标站 WAF 拦截数据中心 IP 或 SPA 无 favicon 声明的场景）
+4. 返回 `{ url: 真实图标地址, preview: /api/icon 同域预览地址, source: 来源, trace: 各步骤轨迹 }`；前端预览与"新标签页打开"走 `/api/icon` 转发，浏览器不直连被墙域名
+5. 排查失败原因：直接访问 `/api/extract?url=目标网址`，看返回 JSON 里的 `trace` 数组即可知道每一步的探测结果
 
 ## 部署（wrangler CLI，推荐）
 

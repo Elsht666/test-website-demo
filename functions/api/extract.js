@@ -1,17 +1,21 @@
 /**
  * GET /api/extract?url=<目标网址>
  *
- * 服务端（Cloudflare 边缘）抓取目标页面 HTML，按优先级解析 favicon 地址，
- * 依次兜底：站点根目录 /favicon.ico → DuckDuckGo 图标服务。
- * 前端不再调用任何外部公共代理，也不直连被墙域名。
+ * 服务端（Cloudflare 边缘）抓取目标页面 HTML，按优先级解析 favicon 地址。
+ * 抓取失败（如目标站 WAF 拦截数据中心 IP、SPA 无声明）时逐级兜底：
+ *   站点根目录 /favicon.ico → Google S2 图标服务 → DuckDuckGo 图标服务
+ *   （图标服务均尝试「完整域名 → 主域名」两级，覆盖子域名站点）
+ * 前端不调用任何外部公共代理，也不直连被墙域名。
  *
- * 返回 JSON：{ ok: true, url: 真实图标地址, preview: 同域预览地址, source: 来源说明 }
+ * 返回 JSON：{ ok, url, preview, source, trace }
+ *   trace 为各步骤执行轨迹，便于排查失败原因。
  */
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 export async function onRequestGet(context) {
     const { searchParams } = new URL(context.request.url);
+    const trace = [];
 
     let target;
     try {
@@ -46,35 +50,50 @@ export async function onRequestGet(context) {
                     ok: true,
                     url: found.url,
                     preview: previewFor(found.url),
-                    source: '页面解析 rel="' + found.rel + '"'
+                    source: '页面解析 rel="' + found.rel + '"',
+                    trace: trace.concat('页面解析成功 rel=' + found.rel)
                 });
             }
+            trace.push('页面已获取(' + html.length + '字节)但未发现 favicon 声明');
+        } else {
+            trace.push('页面请求被拒 HTTP ' + res.status + '（目标站可能拦截数据中心 IP）');
         }
-    } catch (e) { /* 超时或网络错误，继续兜底 */ }
+    } catch (e) {
+        trace.push('页面请求失败: ' + (e && e.name === 'TimeoutError' ? '超时' : '网络错误'));
+    }
 
     /* 2. 站点根目录 /favicon.ico */
     const guess = new URL('/favicon.ico', target.origin).href;
-    if (await imageOk(guess)) {
-        return json({
-            ok: true,
-            url: guess,
-            preview: previewFor(guess),
-            source: '站点默认路径 /favicon.ico'
-        });
+    const guessResult = await imageOk(guess);
+    trace.push('/favicon.ico: ' + guessResult.msg);
+    if (guessResult.ok) {
+        return json({ ok: true, url: guess, preview: previewFor(guess), source: '站点默认路径 /favicon.ico', trace });
     }
 
-    /* 3. DuckDuckGo 图标服务（后端探测转发，前端不直连） */
-    const ddg = 'https://icons.duckduckgo.com/ip3/' + target.hostname + '.ico';
-    if (await imageOk(ddg)) {
-        return json({
-            ok: true,
-            url: ddg,
-            preview: previewFor(ddg),
-            source: 'DuckDuckGo 图标服务（兜底）'
-        });
+    /* 3. 公共图标服务兜底：完整域名 → 主域名，Google S2 → DuckDuckGo */
+    const hosts = dedupe([target.hostname, rootDomain(target.hostname)]);
+    const services = [
+        { name: 'Google 图标服务', make: function(h) { return 'https://www.google.com/s2/favicons?domain=' + h + '&sz=64'; } },
+        { name: 'DuckDuckGo 图标服务', make: function(h) { return 'https://icons.duckduckgo.com/ip3/' + h + '.ico'; } }
+    ];
+    for (const svc of services) {
+        for (const h of hosts) {
+            const cand = svc.make(h);
+            const r = await imageOk(cand);
+            if (r.ok) {
+                return json({
+                    ok: true,
+                    url: cand,
+                    preview: previewFor(cand),
+                    source: svc.name + ' · ' + h + '（兜底）',
+                    trace: trace.concat(svc.name + '命中: ' + cand)
+                });
+            }
+            trace.push(svc.name + '(' + h + '): ' + r.msg);
+        }
     }
 
-    return json({ ok: false, error: '未找到图标，请检查网址是否正确' }, 404);
+    return json({ ok: false, error: '未找到图标，请检查网址是否正确', trace }, 404);
 }
 
 /* ==================== 工具函数 ==================== */
@@ -94,6 +113,7 @@ function previewFor(url) {
     return '/api/icon?url=' + encodeURIComponent(url);
 }
 
+/* 探测候选地址是否为可用图片，返回 { ok, msg } 便于轨迹记录 */
 async function imageOk(url) {
     try {
         const res = await fetch(url, {
@@ -101,12 +121,32 @@ async function imageOk(url) {
             redirect: 'follow',
             signal: AbortSignal.timeout(8000)
         });
-        const ok = res.ok && !/text\/html/i.test(res.headers.get('content-type') || '');
+        const ct = res.headers.get('content-type') || '';
+        let msg;
+        if (!res.ok) { msg = 'HTTP ' + res.status; }
+        else if (/text\/html/i.test(ct)) { msg = '返回的是HTML而非图片'; }
+        else { msg = 'OK'; }
         if (res.body) res.body.cancel().catch(function() {}); /* 只探测不下载 */
-        return ok;
+        return { ok: res.ok && !/text\/html/i.test(ct), msg };
     } catch (e) {
-        return false;
+        return { ok: false, msg: e && e.name === 'TimeoutError' ? '超时' : '网络错误' };
     }
+}
+
+function dedupe(arr) {
+    const seen = {};
+    const out = [];
+    for (const x of arr) { if (x && !seen[x]) { seen[x] = 1; out.push(x); } }
+    return out;
+}
+
+/* 提取主域名：platform.deepseek.com → deepseek.com，xxx.com.cn → xxx.com.cn */
+function rootDomain(hostname) {
+    const h = hostname.toLowerCase();
+    let m = h.match(/([a-z0-9-]+\.(?:com|net|org|gov|edu|ac|co)\.[a-z]{2})$/);
+    if (m) return m[1];
+    m = h.match(/([a-z0-9-]+\.[a-z]{2,})$/);
+    return m ? m[1] : h;
 }
 
 /* 防 SSRF：仅允许公网 http/https 地址 */
@@ -154,7 +194,7 @@ function parseLinks(html) {
     return out;
 }
 
-/* 优先级：rel="icon"(1) → rel="shortcut icon"(2) → rel="apple-touch-icon"(3)，相对路径转绝对 */
+/* 优先级：rel="icon"(1) → rel="shortcut icon"(2) → rel="apple-touch-icon"(3) → rel="alternate icon"(4)，相对路径转绝对 */
 function pickIcon(links, base) {
     let best = null, bestPri = Infinity;
     for (const item of links) {
@@ -162,7 +202,9 @@ function pickIcon(links, base) {
         const tokens = item.rel.split(/\s+/);
         let pri = null;
         if (tokens.indexOf('icon') !== -1) {
-            pri = tokens.indexOf('shortcut') !== -1 ? 2 : 1;
+            if (tokens.indexOf('shortcut') !== -1) pri = 2;
+            else if (tokens.indexOf('alternate') !== -1) pri = 4;
+            else pri = 1;
         } else if (tokens.indexOf('apple-touch-icon') !== -1 ||
                    tokens.indexOf('apple-touch-icon-precomposed') !== -1) {
             pri = 3;
