@@ -1,851 +1,324 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <title>资源分享站</title>
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-    <style>
-        :root {
-            --bg: #2a2a32;
-            --fg: #e6e6e6;
-            --muted: #a3adba;
-            --card: #5b9bd5;
-            --card-hover: #7ab4e8;
-            --accent: #4f8cff;
-            --shadow: 0 10px 30px rgba(0, 0, 0, .25);
-            --radius: 18px;
-            --card-scale: 1;
-            --card-min-width: 160px;
-            --card-row-height: 120px;
-            --pan-card-min-width: 340px;
-            --pan-icon-size: 56px;
-            --card-gap: 16px;
-            --grid-padding: 0 18px 80px;
-        }
-
-        [data-theme="light"] {
-            --bg: #F1F1ED;
-            --fg: #1a1d24;
-            --muted: #4d5561;
-            --card: #5b9bd5;
-            --card-hover: #4a8bc5;
-            --accent: #84CC16;
-            --shadow: 0 12px 28px rgba(0, 0, 0, .08);
-        }
-
-        html, body { height: 100%; }
-
-        body {
-            margin: 0;
-            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans",
-                "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: var(--bg);
-            color: var(--fg);
-            display: grid;
-            grid-template-rows: auto 1fr;
-            gap: 14px;
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: contain;
-            transition: background .2s, color .2s;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 18px 22px;
-            flex-wrap: wrap;
-        }
-
-        header h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
-
-        .spacer { flex: 1; }
-
-        .toolbar {
-            display: inline-flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            appearance: none;
-            border: 0;
-            border-radius: 12px;
-            padding: 10px 14px;
-            cursor: pointer;
-            background: var(--card);
-            color: #fff;
-            box-shadow: var(--shadow);
-            font-weight: 500;
-            transition: background .2s, filter .2s, transform .1s;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-            font-size: 14px;
-        }
-
-        .btn:hover { filter: brightness(1.08); }
-        .btn:active { transform: scale(0.95); }
-        .btn.back-btn {
-            background: rgba(127, 127, 127, .25);
-            color: var(--fg);
-            padding: 10px 16px;
-            display: none;
-        }
-        .btn.back-btn:hover { background: rgba(127, 127, 127, .4); }
-        .btn.back-btn.visible { display: inline-block; }
-
-        .size-controls {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: rgba(127, 127, 127, .15);
-            border-radius: 12px;
-            padding: 4px;
-        }
-
-        .size-btn {
-            appearance: none;
-            border: 0;
-            border-radius: 8px;
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            background: transparent;
-            color: var(--fg);
-            font-size: 16px;
-            font-weight: 600;
-            display: grid;
-            place-items: center;
-            transition: background .15s, transform .1s;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-        }
-
-        .size-btn:hover { background: rgba(127, 127, 127, .2); }
-        .size-btn:active { transform: scale(0.9); }
-        .size-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            user-select: none;
-            position: relative;
-        }
-
-        .switch input {
-            appearance: none;
-            width: 46px;
-            height: 26px;
-            border-radius: 999px;
-            background: rgba(127, 127, 127, .35);
-            position: relative;
-            outline: none;
-            cursor: pointer;
-            transition: background .2s;
-            flex-shrink: 0;
-        }
-
-        .switch input::after {
-            content: "";
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 3px;
-            left: 3px;
-            border-radius: 999px;
-            background: #fff;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
-            transition: transform .2s;
-        }
-
-        .switch input:checked { background: var(--accent); }
-        .switch input:checked::after { transform: translateX(20px); }
-
-        .switch-label-text {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--fg);
-            padding: 4px 8px;
-            border-radius: 8px;
-            transition: background .15s;
-        }
-
-        .switch-label-text:hover { background: rgba(127, 127, 127, .12); }
-
-        .color-dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 2px solid rgba(127, 127, 127, .35);
-            flex-shrink: 0;
-            transition: transform .15s;
-            box-sizing: border-box;
-            cursor: pointer;
-        }
-
-        .switch-label-text:hover .color-dot { transform: scale(1.15); }
-
-        .color-picker-popup {
-            position: fixed;
-            z-index: 1000;
-            background: var(--bg);
-            border: 1px solid rgba(127, 127, 127, .25);
-            border-radius: 14px;
-            padding: 12px 14px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
-            display: none;
-            min-width: 220px;
-        }
-
-        .color-picker-popup.show { display: block; }
-
-        .color-picker-popup .preset-colors {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .color-picker-popup .preset-color-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: transform .12s, border-color .12s, box-shadow .12s;
-            outline: none;
-            padding: 0;
-            flex-shrink: 0;
-        }
-
-        .color-picker-popup .preset-color-btn:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
-            border-color: rgba(255, 255, 255, .6);
-        }
-
-        .color-picker-popup .preset-color-btn.active {
-            border-color: #fff;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, .35);
-            transform: scale(1.1);
-        }
-
-        .color-picker-popup .popup-label {
-            font-size: 11px;
-            color: var(--muted);
-            text-align: center;
-            margin-bottom: 10px;
-            letter-spacing: .3px;
-        }
-
-        /* ==================== 主内容区 ==================== */
-        main {
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: var(--grid-padding);
-            box-sizing: border-box;
-            scrollbar-width: thin;
-        }
-
-        main::-webkit-scrollbar { width: 6px; }
-        main::-webkit-scrollbar-thumb { background: rgba(127,127,127,.3); border-radius: 3px; }
-
-        .view-container {
-            width: min(1200px, 100%);
-            margin: 0 auto;
-        }
-
-        /* ==================== 首页卡片网格 ==================== */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
-            gap: var(--card-gap);
-        }
-
-        .home-tile {
-            user-select: none;
-            -webkit-user-select: none;
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: calc(20px * var(--card-scale)) calc(8px * var(--card-scale));
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: calc(8px * var(--card-scale));
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-            outline: 2px solid transparent;
-            transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
-            box-sizing: border-box;
-            height: var(--card-row-height);
-            cursor: pointer;
-            touch-action: manipulation;
-            border: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .home-tile:hover {
-            background: var(--card-hover);
-            transform: translateY(calc(-2px * var(--card-scale)));
-        }
-
-        .home-tile:active { transform: scale(0.97); }
-
-        .home-tile .tile-num {
-            font-size: calc(32px * var(--card-scale));
-            font-weight: 700;
-            pointer-events: none;
-        }
-
-        .home-tile .tile-label {
-            font-size: calc(12px * var(--card-scale));
-            opacity: .8;
-            pointer-events: none;
-        }
-
-        /* ==================== 详情视图 ==================== */
-        .detail-container {
-            width: min(1100px, 100%);
-            margin: 0 auto;
-            animation: fadeIn .25s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .detail-notice {
-            background: rgba(127, 127, 127, .12);
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            line-height: 1.8;
-            color: var(--fg);
-        }
-
-        .detail-notice .warn {
-            color: #ef4444;
-            font-weight: 600;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        [data-theme="light"] .detail-notice .warn { color: #dc2626; }
-
-        .pan-cards-row {
-            display: flex;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-
-        .pan-card {
-            flex: 1 1 var(--pan-card-min-width);
-            min-width: 280px;
-            border-radius: var(--radius);
-            padding: calc(28px * var(--card-scale)) calc(24px * var(--card-scale)) calc(24px * var(--card-scale));
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-            cursor: default;
-            box-shadow: var(--shadow);
-        }
-
-        .pan-card:hover { transform: translateY(-3px); }
-
-        .pan-card.baidu { background: var(--card); }
-        .pan-card.baidu:hover { background: var(--card-hover); }
-        .pan-card.quark { background: #c56a1e; }
-        .pan-card.quark:hover { background: #e07d28; }
-
-        .pan-icon-wrap {
-            width: var(--pan-icon-size);
-            height: var(--pan-icon-size);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: calc(24px * var(--card-scale));
-            margin-bottom: calc(16px * var(--card-scale));
-            font-weight: bold;
-            flex-shrink: 0;
-            background: rgba(255,255,255,.2);
-            color: #fff;
-        }
-
-        .pan-card .pan-name {
-            font-size: calc(18px * var(--card-scale));
-            font-weight: 700;
-            margin-bottom: calc(14px * var(--card-scale));
-            letter-spacing: .4px;
-            color: #fff;
-        }
-
-        .pan-card .link-display {
-            font-size: calc(13px * var(--card-scale));
-            color: rgba(255,255,255,.85);
-            word-break: break-all;
-            background: rgba(0,0,0,.15);
-            padding: calc(12px * var(--card-scale)) calc(16px * var(--card-scale));
-            border-radius: 10px;
-            margin-bottom: calc(16px * var(--card-scale));
-            width: 100%;
-            line-height: 1.6;
-            text-align: center;
-            min-height: calc(48px * var(--card-scale));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 4px;
-            box-sizing: border-box;
-        }
-
-        .link-display .code-highlight {
-            display: inline-block;
-            background: rgba(255,255,255,.25);
-            color: #fff;
-            padding: calc(2px * var(--card-scale)) calc(10px * var(--card-scale));
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: calc(15px * var(--card-scale));
-            margin-left: 4px;
-            letter-spacing: 1px;
-        }
-
-        .copy-btn {
-            padding: calc(12px * var(--card-scale)) calc(28px * var(--card-scale));
-            border: none;
-            color: #fff;
-            border-radius: 99px;
-            font-size: calc(15px * var(--card-scale));
-            cursor: pointer;
-            font-weight: 600;
-            letter-spacing: .5px;
-            transition: all 0.25s ease;
-            width: 100%;
-            max-width: 240px;
-            position: relative;
-            overflow: hidden;
-            touch-action: manipulation;
-        }
-
-        .copy-btn:active { transform: scale(0.96); }
-
-        .pan-card.baidu .copy-btn {
-            background: rgba(255,255,255,.25);
-            border: 2px solid rgba(255,255,255,.3);
-        }
-        .pan-card.baidu .copy-btn:hover { background: rgba(255,255,255,.35); }
-
-        .pan-card.quark .copy-btn {
-            background: rgba(255,255,255,.25);
-            border: 2px solid rgba(255,255,255,.3);
-        }
-        .pan-card.quark .copy-btn:hover { background: rgba(255,255,255,.35); }
-
-        .copy-btn.copied {
-            background: #27ae60 !important;
-            border-color: #27ae60 !important;
-            pointer-events: none;
-        }
-
-        .copyright {
-            margin-top: 40px;
-            font-size: 12px;
-            color: var(--muted);
-            text-align: center;
-            letter-spacing: .3px;
-        }
-
-        /* ==================== Toast ==================== */
-        .toast {
-            position: fixed;
-            top: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-120px);
-            background: #1a1a2e;
-            color: #fff;
-            padding: 13px 28px;
-            border-radius: 99px;
-            font-size: 15px;
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0;
-            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            white-space: nowrap;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-            letter-spacing: 0.4px;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* ==================== 手机适配 ==================== */
-        @media (max-width: 600px) {
-            header { padding: 14px 16px; gap: 8px; }
-            header h1 { font-size: 17px; }
-            .btn { padding: 8px 12px; font-size: 13px; }
-            .size-btn { width: 28px; height: 28px; font-size: 14px; }
-
-            .card-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                gap: calc(10px * var(--card-scale));
-            }
-            .home-tile {
-                height: calc(90px * var(--card-scale));
-                padding: calc(12px * var(--card-scale)) calc(6px * var(--card-scale));
-                border-radius: 14px;
-            }
-            .home-tile .tile-num { font-size: calc(24px * var(--card-scale)); }
-            .home-tile .tile-label { font-size: calc(10px * var(--card-scale)); }
-
-            .detail-notice { padding: 14px 16px; font-size: 13px; }
-
-            .pan-cards-row { flex-direction: column; gap: 14px; }
-            .pan-card {
-                padding: calc(22px * var(--card-scale)) calc(18px * var(--card-scale)) calc(20px * var(--card-scale));
-                min-width: auto;
-                border-radius: 16px;
-            }
-            .pan-icon-wrap { width: calc(48px * var(--card-scale)); height: calc(48px * var(--card-scale)); font-size: calc(20px * var(--card-scale)); border-radius: 12px; margin-bottom: calc(12px * var(--card-scale)); }
-            .pan-card .pan-name { font-size: calc(16px * var(--card-scale)); margin-bottom: calc(12px * var(--card-scale)); }
-            .pan-card .link-display { font-size: calc(12px * var(--card-scale)); padding: calc(10px * var(--card-scale)) calc(12px * var(--card-scale)); margin-bottom: calc(14px * var(--card-scale)); }
-            .copy-btn { font-size: calc(14px * var(--card-scale)); padding: calc(11px * var(--card-scale)) calc(20px * var(--card-scale)); max-width: 100%; }
-
-            .color-picker-popup { min-width: 200px; }
-            .color-picker-popup .preset-color-btn { width: 28px; height: 28px; }
-        }
-
-        @media (max-width: 380px) {
-            .card-grid { grid-template-columns: repeat(3, 1fr); }
-            .home-tile { height: calc(80px * var(--card-scale)); }
-            .home-tile .tile-num { font-size: calc(20px * var(--card-scale)); }
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="粘贴网址，一键提取网站 favicon 图标地址，支持复制。Cloudflare Pages 同域代理，服务端抓取解析">
+<title>网站图标地址提取工具</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --fg: #171717;
+        --fg-muted: #666;
+        --fg-faint: #999;
+        --border: #e5e5e5;
+        --card: #fff;
+        --bg: #fafafa;
+        --accent: #0070f3;
+        --danger-bg: #fef2f2;
+        --danger-border: #fecaca;
+        --danger-fg: #dc2626;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                     "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 48px 16px;
+    }
+
+    .container { width: 100%; max-width: 640px; }
+
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 { font-size: 24px; font-weight: 700; letter-spacing: -.3px; }
+    header p { font-size: 14px; color: var(--fg-muted); margin-top: 8px; }
+
+    .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    #urlInput {
+        flex: 1 1 200px;
+        min-width: 0;
+        height: 42px;
+        padding: 0 14px;
+        font-size: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    #urlInput:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0,112,243,.15);
+    }
+    #urlInput::placeholder { color: #aaa; }
+
+    button {
+        font-family: inherit;
+        cursor: pointer;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background .15s, opacity .15s;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    button:disabled { cursor: not-allowed; opacity: .6; }
+
+    #btnExtract {
+        height: 42px;
+        padding: 0 22px;
+        font-size: 14px;
+        background: var(--fg);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #btnExtract:hover:not(:disabled) { background: #333; }
+
+    .spinner {
+        width: 14px; height: 14px;
+        border: 2px solid rgba(255,255,255,.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+        display: none;
+    }
+    #btnExtract.loading .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error {
+        margin-top: 14px;
+        padding: 10px 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        background: var(--danger-bg);
+        border: 1px solid var(--danger-border);
+        color: var(--danger-fg);
+        border-radius: 8px;
+    }
+
+    .result { margin-top: 16px; }
+    .result-head { display: flex; align-items: center; gap: 14px; }
+    #iconPreview {
+        width: 48px; height: 48px;
+        flex: none;
+        object-fit: contain;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 3px;
+        background: #fff;
+    }
+    .result-url {
+        flex: 1;
+        min-width: 0;
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        word-break: break-all;
+        background: #f5f5f5;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 10px 12px;
+    }
+
+    .result-actions {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    #btnCopy {
+        height: 36px;
+        padding: 0 16px;
+        font-size: 13px;
+        background: #fff;
+        border: 1px solid var(--border);
+        color: var(--fg);
+    }
+    #btnCopy:hover { background: #f5f5f5; }
+    #btnCopy.copied { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+
+    #linkVisit {
+        font-size: 13px;
+        color: var(--accent);
+        text-decoration: none;
+    }
+    #linkVisit:hover { text-decoration: underline; }
+
+    #sourceNote { font-size: 12px; color: var(--fg-faint); }
+
+    footer {
+        margin-top: 28px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--fg-faint);
+        line-height: 1.8;
+    }
+
+    .hidden { display: none !important; }
+</style>
 </head>
 <body>
+<main class="container">
     <header>
-        <h1 id="pageTitle">资源分享站</h1>
-        <div class="spacer"></div>
-        <div class="toolbar">
-            <button class="btn back-btn" id="btnBack">← 返回首页</button>
-            <div class="size-controls" title="调节卡片大小">
-                <button class="size-btn" id="btnSizeDown" title="缩小卡片">A−</button>
-                <button class="size-btn" id="btnSizeReset" title="重置大小" style="font-size:13px;">A</button>
-                <button class="size-btn" id="btnSizeUp" title="放大卡片">A+</button>
-            </div>
-            <label class="switch" id="switchContainer">
-                <input id="themeToggle" type="checkbox" />
-                <span class="switch-label-text" id="colorTrigger" title="点击调节卡片颜色">
-                    <span class="color-dot" id="colorDot"></span>
-                    <span id="themeLabel">浅色模式</span>
-                </span>
-                <div class="color-picker-popup" id="colorPickerPopup">
-                    <div class="popup-label">选择卡片颜色</div>
-                    <div class="preset-colors" id="presetColors"></div>
-                </div>
-            </label>
-        </div>
+        <h1>网站图标地址提取工具</h1>
+        <p>粘贴网址，服务端抓取并解析 favicon 图标完整地址</p>
     </header>
 
-    <!-- 唯一主内容容器，JS 动态渲染 -->
-    <main id="app"></main>
-
-    <!-- Toast 提示 -->
-    <div class="toast" id="toast"></div>
-
-    <script>
-        /* ==================== 配置 ==================== */
-        const PRESET_COLORS = [
-            '#5b9bd5', '#4f8cff', '#3b82f6', '#6366f1', '#8b5cf6',
-            '#a78bfa', '#ec4899', '#f472b6', '#22c55e', '#10b981',
-            '#14b8a6', '#f59e0b', '#f97316', '#ef4444', '#6b7280'
-        ];
-
-        const SCALE_MIN = 0.7, SCALE_MAX = 1.5, SCALE_STEP = 0.1, SCALE_DEFAULT = 1;
-        const LS_THEME = 'share.theme', LS_CARD_COLOR = 'share.cardColor', LS_CARD_SCALE = 'share.cardScale';
-
-        /* ==================== 资源数据（方便扩展） ==================== */
-        const RESOURCES = [
-            { id: 1, name: '1', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 1' } },
-            { id: 2, name: '2', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 2' } },
-            { id: 3, name: '3', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 3' } },
-            { id: 4, name: '4', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 4' } },
-            { id: 5, name: '5', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 5' } },
-            { id: 6, name: '6', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 6' } },
-            { id: 7, name: '7', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 7' } },
-            { id: 8, name: '8', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 8' } },
-            { id: 9, name: '9', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 9' } },
-            { id: 10, name: '10', baidu: { link: 'https://pan.baidu.com/s/1ZLSRcKjZXWSwgj8seg9SQw', code: '4321' }, quark: { link: 'https://pan.quark.cn/s/96bb5e29fd3b', title: '资源分享 10' } },
-        ];
-
-        /* ==================== 状态 ==================== */
-        let currentResource = null;
-        let currentCardColor = '#5b9bd5';
-        let cardScale = SCALE_DEFAULT;
-        let colorPickerOpen = false;
-
-        /* ==================== DOM ==================== */
-        const app = document.getElementById('app');
-        const btnBack = document.getElementById('btnBack');
-        const pageTitle = document.getElementById('pageTitle');
-        const themeToggle = document.getElementById('themeToggle');
-        const themeLabel = document.getElementById('themeLabel');
-        const colorTrigger = document.getElementById('colorTrigger');
-        const colorDot = document.getElementById('colorDot');
-        const colorPickerPopup = document.getElementById('colorPickerPopup');
-        const presetColorsContainer = document.getElementById('presetColors');
-        const switchContainer = document.getElementById('switchContainer');
-        const btnSizeDown = document.getElementById('btnSizeDown');
-        const btnSizeUp = document.getElementById('btnSizeUp');
-        const btnSizeReset = document.getElementById('btnSizeReset');
-
-        /* ==================== 工具函数 ==================== */
-        function hexToRgb(hex) { const c = hex.replace('#',''); return {r:parseInt(c.substring(0,2),16),g:parseInt(c.substring(2,4),16),b:parseInt(c.substring(4,6),16)}; }
-        function rgbToHex(r,g,b){ const cl=v=>Math.max(0,Math.min(255,Math.round(v))); return '#'+[cl(r),cl(g),cl(b)].map(v=>cl(v).toString(16).padStart(2,'0')).join(''); }
-        function adjustBrightness(hex,f){const{r,g,b}=hexToRgb(hex);return rgbToHex(r+(255-r)*(f-1),g+(255-g)*(f-1),b+(255-b)*(f-1));}
-        function isLightTheme(){return document.documentElement.getAttribute('data-theme')==='light';}
-        function hoverColor(c){return adjustBrightness(c,isLightTheme()?0.75:1.25);}
-        function shortLink(url){try{const u=new URL(url);return u.host+u.pathname.substring(0,20)+'...';}catch{return url.substring(0,30)+'...';}}
-
-        function applyCardColor(color){
-            const root=document.documentElement;
-            root.style.setProperty('--card',color);
-            root.style.setProperty('--card-hover',hoverColor(color));
-            if(colorDot) colorDot.style.backgroundColor=color;
-            currentCardColor=color;
-        }
-
-        function showToast(msg){
-            const t=document.getElementById('toast');
-            if(t._timer)clearTimeout(t._timer);
-            t.textContent=msg;
-            t.classList.add('show');
-            t._timer=setTimeout(()=>t.classList.remove('show'),2200);
-        }
-
-        /* ==================== 颜色选择器 ==================== */
-        function buildPresetColors(){
-            presetColorsContainer.innerHTML='';
-            PRESET_COLORS.forEach(c=>{
-                const b=document.createElement('button');
-                b.type='button';
-                b.className='preset-color-btn'+(c===currentCardColor?' active':'');
-                b.style.backgroundColor=c;
-                b.title=c;
-                b.setAttribute('data-color',c);
-                b.addEventListener('click',e=>{e.stopPropagation();selectColor(c);});
-                presetColorsContainer.appendChild(b);
-            });
-        }
-        function updatePresetActive(){
-            presetColorsContainer.querySelectorAll('.preset-color-btn').forEach(b=>{
-                b.classList.toggle('active',b.getAttribute('data-color')===currentCardColor);
-            });
-        }
-        function repositionPicker(){
-            if(!colorPickerOpen)return;
-            const r=colorTrigger.getBoundingClientRect();
-            const vw=window.innerWidth,vh=window.innerHeight,gap=8;
-            const pw=colorPickerPopup.offsetWidth,ph=colorPickerPopup.offsetHeight;
-            let top,left;
-            if(r.top>=ph+gap)top=r.top-ph-gap;
-            else if(vh-r.bottom>=ph+gap)top=r.bottom+gap;
-            else top=Math.max(gap,vh-ph-gap);
-            left=r.left+r.width/2-pw/2;
-            left=Math.max(gap,Math.min(left,vw-pw-gap));
-            colorPickerPopup.style.top=top+'px';
-            colorPickerPopup.style.left=left+'px';
-        }
-        function openPicker(e){
-            e.stopPropagation();e.preventDefault();
-            buildPresetColors();updatePresetActive();
-            colorPickerPopup.classList.add('show');
-            colorPickerOpen=true;
-            requestAnimationFrame(repositionPicker);
-            window.addEventListener('resize',repositionPicker);
-        }
-        function closePicker(){
-            colorPickerPopup.classList.remove('show');
-            colorPickerOpen=false;
-            window.removeEventListener('resize',repositionPicker);
-        }
-        function selectColor(c){
-            currentCardColor=c;
-            localStorage.setItem(LS_CARD_COLOR,c);
-            applyCardColor(c);
-            updatePresetActive();
-            closePicker();
-        }
-        colorTrigger.addEventListener('click',e=>{colorPickerOpen?closePicker():openPicker(e);});
-        colorPickerPopup.addEventListener('click',e=>e.stopPropagation());
-        document.addEventListener('click',e=>{if(colorPickerOpen&&!switchContainer.contains(e.target))closePicker();});
-
-        /* ==================== 主题 ==================== */
-        function applyTheme(t){
-            document.documentElement.setAttribute('data-theme',t);
-            themeToggle.checked=(t==='light');
-            themeLabel.textContent=t==='light'?'浅色模式':'暗色模式';
-            localStorage.setItem(LS_THEME,t);
-            applyCardColor(currentCardColor);
-            if(colorDot)colorDot.style.backgroundColor=currentCardColor;
-        }
-        themeToggle.addEventListener('change',()=>{
-            applyTheme(themeToggle.checked?'light':'dark');
-            buildPresetColors();updatePresetActive();
-        });
-
-        /* ==================== 卡片缩放 ==================== */
-        function applyScale(s){
-            cardScale=Math.max(SCALE_MIN,Math.min(SCALE_MAX,s));
-            const r=document.documentElement;
-            r.style.setProperty('--card-scale',cardScale);
-            r.style.setProperty('--card-min-width',(160*cardScale)+'px');
-            r.style.setProperty('--card-row-height',(120*cardScale)+'px');
-            r.style.setProperty('--pan-card-min-width',(340*cardScale)+'px');
-            r.style.setProperty('--pan-icon-size',(56*cardScale)+'px');
-            r.style.setProperty('--card-gap',(16*cardScale)+'px');
-            const ph=Math.round(18*cardScale),pb=Math.round(80*cardScale);
-            r.style.setProperty('--grid-padding',`0 ${ph}px ${pb}px`);
-            btnSizeDown.disabled=cardScale<=SCALE_MIN;
-            btnSizeUp.disabled=cardScale>=SCALE_MAX;
-            localStorage.setItem(LS_CARD_SCALE,String(cardScale));
-        }
-        btnSizeDown.addEventListener('click',()=>applyScale(cardScale-SCALE_STEP));
-        btnSizeUp.addEventListener('click',()=>applyScale(cardScale+SCALE_STEP));
-        btnSizeReset.addEventListener('click',()=>applyScale(SCALE_DEFAULT));
-
-        /* ==================== 视图渲染 ==================== */
-        function renderHome(){
-            currentResource=null;
-            pageTitle.textContent='资源分享站';
-            btnBack.classList.remove('visible');
-            let html='<div class="view-container"><div class="card-grid">';
-            RESOURCES.forEach(res=>{
-                html+=`<button class="home-tile" data-id="${res.id}"><div class="tile-num">${res.name}</div><div class="tile-label">点击查看</div></button>`;
-            });
-            html+='</div><div class="copyright">Powered by Cloudflare Pages | 2026</div></div>';
-            app.innerHTML=html;
-            app.scrollTop=0;
-            // 绑定点击事件 - 直接进入详情
-            app.querySelectorAll('.home-tile').forEach(tile=>{
-                tile.addEventListener('click',function(){
-                    const id=parseInt(this.getAttribute('data-id'));
-                    renderDetail(id);
-                });
-            });
-        }
-
-        function renderDetail(resourceId){
-            const res=RESOURCES.find(r=>r.id===resourceId);
-            if(!res){console.error('not found',resourceId);renderHome();return;}
-            currentResource=res;
-            pageTitle.textContent='资源 '+res.name;
-            btnBack.classList.add('visible');
-
-            const bFullLink=res.baidu.link+'?pwd='+res.baidu.code;
-            const bLink=shortLink(bFullLink);
-            const qLink=shortLink(res.quark.link);
-            app.innerHTML=`
-<div class="detail-container">
-<div class="detail-notice"><span class="warn">⚠️ 资源说明</span>点击下方按钮即可一键复制链接并在新标签页打开网盘页面。</div>
-<div class="pan-cards-row">
-    <div class="pan-card baidu">
-        <div class="pan-icon-wrap">度</div>
-        <div class="pan-name">百度网盘</div>
-        <div class="link-display">${bLink}<span class="code-highlight">${res.baidu.code}</span></div>
-        <button class="copy-btn" id="copyBaiduBtn">📋 复制并打开</button>
+    <div class="card">
+        <div class="input-row">
+            <input id="urlInput" type="text" spellcheck="false"
+                   placeholder="粘贴网站地址，如 https://www.github.com" autocomplete="off">
+            <button id="btnExtract"><span class="spinner"></span><span id="btnExtractText">提取</span></button>
+        </div>
+        <div id="errorBox" class="error hidden"></div>
     </div>
-    <div class="pan-card quark">
-        <div class="pan-icon-wrap">夸</div>
-        <div class="pan-name">夸克网盘</div>
-        <div class="link-display">${qLink}</div>
-        <button class="copy-btn" id="copyQuarkBtn">📋 复制并打开</button>
+
+    <div id="resultCard" class="card result hidden">
+        <div class="result-head">
+            <img id="iconPreview" alt="图标预览">
+            <div class="result-url" id="iconUrl"></div>
+        </div>
+        <div class="result-actions">
+            <button id="btnCopy">📋 复制地址</button>
+            <a id="linkVisit" href="#" target="_blank" rel="noopener">在新标签页打开 ↗</a>
+            <span id="sourceNote"></span>
+        </div>
     </div>
-</div>
-<div class="copyright">Powered by Cloudflare Pages | 2026</div>
-</div>`;
-            app.scrollTop=0;
 
-            // 绑定复制按钮（复制纯链接 + 新标签页打开）
-            const bb=document.getElementById('copyBaiduBtn');
-            const qb=document.getElementById('copyQuarkBtn');
-            bb.addEventListener('click',()=>{
-                window.open(bFullLink,'_blank','noopener,noreferrer');
-                doCopy(bFullLink,bb,'百度网盘链接已复制并打开！');
-            });
-            qb.addEventListener('click',()=>{
-                window.open(res.quark.link,'_blank','noopener,noreferrer');
-                doCopy(res.quark.link,qb,'夸克网盘链接已复制并打开！');
-            });
+    <footer>
+        抓取与图标转发由 Cloudflare Pages Functions 同域完成（/api/extract · /api/icon）<br>
+        提取优先级：rel="icon" → rel="shortcut icon" → rel="apple-touch-icon" → /favicon.ico → DuckDuckGo 图标
+    </footer>
+</main>
+
+<script>
+(function() {
+    'use strict';
+
+    var PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48">' +
+        '<rect width="48" height="48" rx="8" fill="#f0f0f0"/>' +
+        '<text x="24" y="30" text-anchor="middle" font-size="20" fill="#bbb">?</text></svg>');
+
+    var input = document.getElementById('urlInput');
+    var btnExtract = document.getElementById('btnExtract');
+    var btnExtractText = document.getElementById('btnExtractText');
+    var errorBox = document.getElementById('errorBox');
+    var resultCard = document.getElementById('resultCard');
+    var iconPreview = document.getElementById('iconPreview');
+    var iconUrl = document.getElementById('iconUrl');
+    var btnCopy = document.getElementById('btnCopy');
+    var linkVisit = document.getElementById('linkVisit');
+    var sourceNote = document.getElementById('sourceNote');
+
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.classList.remove('hidden');
+    }
+    function clearError() { errorBox.classList.add('hidden'); }
+
+    function setLoading(on) {
+        btnExtract.disabled = on;
+        btnExtract.classList.toggle('loading', on);
+        btnExtractText.textContent = on ? '提取中…' : '提取';
+    }
+
+    function showResult(data) {
+        iconPreview.onerror = function() { iconPreview.src = PLACEHOLDER; };
+        iconPreview.src = data.preview;   /* 同域代理地址，被墙图标也能显示 */
+        iconUrl.textContent = data.url;   /* 真实完整图标地址，供复制 */
+        linkVisit.href = data.preview;
+        sourceNote.textContent = data.source ? '来源：' + data.source : '';
+        resultCard.classList.remove('hidden');
+    }
+
+    function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text).then(function() { return true; }, function() { return legacyCopy(text); });
+        }
+        return Promise.resolve(legacyCopy(text));
+    }
+    function legacyCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        return ok;
+    }
+
+    function extract() {
+        clearError();
+        resultCard.classList.add('hidden');
+
+        var raw = input.value.trim();
+        if (!raw) { showError('请输入网址'); return; }
+
+        var target;
+        try {
+            target = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+        } catch (e) {
+            showError('网址格式不正确，请检查后重试');
+            return;
         }
 
-        function doCopy(text,btn,msg){
-            const ok=()=>{
-                const orig=btn.textContent;
-                btn.textContent='✅ 已复制！';
-                btn.classList.add('copied');
-                showToast(msg);
-                setTimeout(()=>{btn.textContent=orig;btn.classList.remove('copied');},2000);
-            };
-            const fail=()=>{
-                const ta=document.createElement('textarea');
-                ta.value=text;ta.style.position='absolute';ta.style.left='-9999px';
-                document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,ta.value.length);
-                try{document.execCommand('copy');ok();}catch(e){showToast('复制失败，请手动复制');}
-                document.body.removeChild(ta);
-            };
-            if(navigator.clipboard&&window.isSecureContext){
-                navigator.clipboard.writeText(text).then(ok).catch(fail);
-            }else{fail();}
-        }
+        setLoading(true);
 
-        btnBack.addEventListener('click',renderHome);
+        fetch('/api/extract?url=' + encodeURIComponent(target.href))
+            .then(function(res) {
+                return res.json().catch(function() { return null; }).then(function(data) { return { res: res, data: data }; });
+            })
+            .then(function(r) {
+                if (!r.res.ok || !r.data || !r.data.ok) {
+                    var msg = (r.data && r.data.error) ? r.data.error : '未找到图标，请检查网址是否正确';
+                    showError(msg);
+                    return;
+                }
+                showResult(r.data);
+            })
+            .catch(function() {
+                showError('请求失败，请检查网络后重试');
+            })
+            .then(function() { setLoading(false); });
+    }
 
-        window.addEventListener('keydown',e=>{
-            // 禁止 Ctrl+S / Cmd+S 保存网页
-            if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){
-                e.preventDefault();
-                showToast('页面不支持保存');
-                return;
-            }
-            if(e.key==='Escape'){
-                if(colorPickerOpen)closePicker();
-                else if(currentResource)renderHome();
-            }
+    btnExtract.addEventListener('click', extract);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') extract();
+    });
+
+    btnCopy.addEventListener('click', function() {
+        copyText(iconUrl.textContent).then(function(ok) {
+            if (!ok) { showError('复制失败，请手动选中文本复制'); return; }
+            clearError();
+            btnCopy.textContent = '已复制 ✓';
+            btnCopy.classList.add('copied');
+            setTimeout(function() {
+                btnCopy.textContent = '📋 复制地址';
+                btnCopy.classList.remove('copied');
+            }, 1500);
         });
-
-        /* ==================== 视图渲染 ==================== */
-        (function init(){
-            const savedColor=localStorage.getItem(LS_CARD_COLOR);
-            currentCardColor=(savedColor&&PRESET_COLORS.includes(savedColor))?savedColor:(savedColor||'#5b9bd5');
-            const savedScale=parseFloat(localStorage.getItem(LS_CARD_SCALE));
-            cardScale=(savedScale>=SCALE_MIN&&savedScale<=SCALE_MAX)?savedScale:SCALE_DEFAULT;
-            applyScale(cardScale);
-            applyTheme(localStorage.getItem(LS_THEME)||'dark');
-            if(colorDot)colorDot.style.backgroundColor=currentCardColor;
-            buildPresetColors();
-            renderHome();
-        })();
-    </script>
+    });
+})();
+</script>
 </body>
 </html>
