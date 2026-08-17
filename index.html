@@ -36,8 +36,8 @@
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                      "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
-        /* 初始即显示压缩版背景图（体积极小，加载无感知），高清版由 bgLayer 异步淡入替换 */
-        background: var(--bg) url('static/img/background.webp') no-repeat center center / cover;
+        /* body 保持基础纯色，压缩图模糊层与高清层由下层 div 承载 */
+        background: var(--bg);
         color: var(--fg);
         min-height: 100vh;
         display: flex;
@@ -66,6 +66,17 @@
         width: 420px; height: 420px;
         background: rgba(129, 140, 248, .14);
         bottom: -140px; left: -120px;
+    }
+
+    /* 压缩图模糊层：初始立即显示，高斯模糊实现毛玻璃效果 */
+    #bgBlur {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background: url('static/img/background.webp') no-repeat center center / cover;
+        filter: blur(10px);
+        transform: scale(1.1);          /* 放大避免模糊后边缘露底色 */
+        pointer-events: none;
     }
 
     /* 高清背景层：默认隐藏，高清图加载完成后淡入，不阻塞页面交互 */
@@ -313,6 +324,7 @@
         #iconPreview { width: 44px; height: 44px; }
         .result-head, .result-actions { gap: 10px; }
         body::before, body::after { opacity: .35; }
+        #bgBlur { filter: blur(6px); }  /* 移动端降低模糊，兼顾性能 */
         .snake-module {
             min-height: 160px;
             padding: 20px 15px;
@@ -326,6 +338,8 @@
 </style>
 </head>
 <body>
+<!-- 压缩图模糊层（毛玻璃效果，初始立即显示） -->
+<div id="bgBlur" aria-hidden="true"></div>
 <!-- 高清背景层（background1.webp 异步加载完成后淡入） -->
 <div id="bgLayer" aria-hidden="true"></div>
 <main class="container">
