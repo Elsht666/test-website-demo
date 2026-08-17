@@ -67,7 +67,7 @@
         bottom: -140px; left: -120px;
     }
 
-    /* 高清背景层：默认隐藏，高清图加载完成后淡入 */
+    /* 高清背景层：默认隐藏，高清图加载完成后淡入，不阻塞页面交互 */
     #bgLayer {
         position: fixed;
         inset: 0;
@@ -78,38 +78,6 @@
         pointer-events: none;
     }
     #bgLayer.loaded { opacity: 1; }
-
-    /* 全屏加载过渡遮罩：低清预览背景 + 环形 loading 动画 */
-    #loadingOverlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: var(--bg) url('static/img/background.webp') no-repeat center center / cover;
-        transition: opacity .8s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    #loadingOverlay::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: rgba(244, 246, 251, .25);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-    }
-    #loadingOverlay.fade-out { opacity: 0; pointer-events: none; }
-
-    /* 环形 loading 动画（绿色） */
-    .loader-ring {
-        width: 52px;
-        height: 52px;
-        border: 4px solid rgba(16, 185, 129, .2);
-        border-top-color: #10b981;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        z-index: 1;
-    }
 
     .container { width: 100%; max-width: 620px; }
 
@@ -357,12 +325,8 @@
 </style>
 </head>
 <body>
-<!-- 高清背景层（background1.webp 加载完成后淡入） -->
+<!-- 高清背景层（background1.webp 异步加载完成后淡入） -->
 <div id="bgLayer" aria-hidden="true"></div>
-<!-- 全屏加载过渡遮罩：低清预览 + 环形动画 -->
-<div id="loadingOverlay" aria-hidden="true">
-    <div class="loader-ring"></div>
-</div>
 <main class="container">
     <header>
         <h1>网站图标地址提取工具</h1>
@@ -567,39 +531,21 @@
 })();
 </script>
 
-<!-- 背景图加载：后台异步加载高清图，成功后淡入高清层并淡出加载遮罩 -->
+<!-- 背景图加载：后台异步加载高清图，不阻塞页面交互，加载完成后淡入 -->
 <script>
 (function() {
     'use strict';
     var bg = document.getElementById('bgLayer');
-    var overlay = document.getElementById('loadingOverlay');
-    var IMG_HD = 'static/img/background1.webp';
+    if (!bg) return;
 
-    // 遮罩最少展示时长，避免加载过快导致闪烁
-    var MIN_SHOW = 600;
-    var start = Date.now();
-
-    function hideOverlay() {
-        var elapse = Date.now() - start;
-        var wait = Math.max(0, MIN_SHOW - elapse);
-        setTimeout(function() {
-            overlay.classList.add('fade-out');
-            setTimeout(function() {
-                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-            }, 900);
-        }, wait);
-    }
-
-    // 后台异步预加载高清图
+    // 后台异步预加载高清图，成功后在 bgLayer 上平滑淡入
     var img = new Image();
     img.onload = function() {
-        bg.style.backgroundImage = "url('" + IMG_HD + "')";
+        bg.style.backgroundImage = "url('static/img/background1.webp')";
         bg.classList.add('loaded');
-        hideOverlay();
     };
-    // 高清图加载失败时直接降级为纯色背景，不再阻塞页面
-    img.onerror = function() { hideOverlay(); };
-    img.src = IMG_HD;
+    // 加载失败则保持基础纯色背景，不影响页面
+    img.src = 'static/img/background1.webp';
 })();
 </script>
 
