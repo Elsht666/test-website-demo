@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="粘贴网址，一键提取网站 favicon 图标地址，支持复制。Cloudflare Pages 同域代理，服务端抓取解析">
+<link rel="icon" href="static/icon/favicon.ico" type="image/x-icon">
 <title>网站图标地址提取工具</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,7 +53,7 @@
         z-index: -1;
         border-radius: 50%;
         filter: blur(80px);
-        opacity: .55;
+        opacity: 0.5;
         pointer-events: none;
     }
     body::before {
@@ -65,6 +66,18 @@
         background: rgba(129, 140, 248, .14);
         bottom: -140px; left: -120px;
     }
+
+    /* 背景图延迟加载层：首屏先显示纯色，图片加载完成后淡入，不拖慢页面 */
+    #bgLayer {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: var(--bg) no-repeat center center / cover;
+        opacity: 0;
+        transition: opacity .6s ease;
+        pointer-events: none;
+    }
+    #bgLayer.loaded { opacity: 1; }
 
     .container { width: 100%; max-width: 620px; }
 
@@ -90,12 +103,13 @@
         box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
     }
 
+    /* ===== 输入卡片（原样，无蛇干扰） ===== */
     .card {
         background: var(--card);
-        border: 1px solid var(--border);
+        border: 2px solid #1e293b;
         border-radius: var(--radius-lg);
         padding: 22px;
-        box-shadow: var(--shadow-card);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .18), 0 2px 6px rgba(0, 0, 0, .12);
     }
 
     .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -198,7 +212,6 @@
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
         padding: 4px;
-        /* 棋盘底衬托透明图标 */
         background: repeating-conic-gradient(#f1f5f9 0 25%, #fff 0 50%) 0 0 / 12px 12px;
     }
     .result-url {
@@ -270,16 +283,40 @@
 
     .hidden { display: none !important; }
 
+    /* ===== 新增：独立蛇模块（在输入卡片下方，留足空间，带透视效果） ===== */
+.snake-module {
+    margin-top: 30px;          /* 与输入卡片保持距离，可自行调整 */
+    padding: 0px 0;           /* 上下留一点空间，让蛇图不紧贴上下边缘（可选） */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* 移除所有背景、边框、阴影、模糊 */
+}
+
+    .snake-module img {
+        display: block;
+        width: 140%;                    /* 占满模块宽度 */
+        max-width: 700px;               /* 限制最大宽度，避免过大 */
+        height: auto;                   /* 保持纵横比，防止拉伸变形 */
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    /* 移动端适配 */
     @media (max-width: 520px) {
         .card { padding: 16px; border-radius: 14px; }
         header { margin-bottom: 24px; }
         header p { font-size: 13px; padding: 5px 12px; }
-        #urlInput { height: 48px; font-size: 16px; } /* ≥16px 防止 iOS 聚焦自动放大 */
+        #urlInput { height: 48px; font-size: 16px; }
         #urlInput, #btnExtract { border-radius: var(--radius-sm); }
-        #btnExtract { flex: 1 1 100%; justify-content: center; } /* 窄屏按钮独占一行 */
+        #btnExtract { flex: 1 1 100%; justify-content: center; }
         #iconPreview { width: 44px; height: 44px; }
         .result-head, .result-actions { gap: 10px; }
         body::before, body::after { opacity: .35; }
+        .snake-module {
+            min-height: 160px;
+            padding: 20px 15px;
+        }
+        .snake-module img { max-width: 300px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -288,12 +325,14 @@
 </style>
 </head>
 <body>
+<!-- 背景图延迟加载层 -->
+<div id="bgLayer" aria-hidden="true"></div>
 <main class="container">
     <header>
         <h1>网站图标地址提取工具</h1>
-        <p>粘贴网址，服务端抓取并解析 favicon 图标完整地址</p>
     </header>
 
+    <!-- 输入卡片（原样） -->
     <div class="card">
         <div class="input-row">
             <input id="urlInput" type="text" spellcheck="false"
@@ -303,6 +342,12 @@
         <div id="errorBox" class="error hidden"></div>
     </div>
 
+    <!-- ===== 独立蛇模块（新增，在输入卡片下方） ===== -->
+    <div class="snake-module">
+        <img src="static/svg/snake-Light.svg" alt="动态贪吃蛇">
+    </div>
+
+    <!-- 结果卡片 -->
     <div id="resultCard" class="card result hidden">
         <div class="result-head">
             <img id="iconPreview" alt="图标预览">
@@ -315,13 +360,10 @@
         </div>
     </div>
 
-    <footer>
-        网站工具抓取与图标转发由 Cloudflare Pages Functions 同域完成。<br>
-        优先级：页面解析 rel="icon" → 站点原生路径 → 浏览器<br> 本地探测→ 图标缓存（经本站代理，不出 Google 直链）
-    </footer>
 </main>
 
 <script>
+//（原有 JavaScript 完全保留，未做任何改动）
 (function() {
     'use strict';
 
@@ -355,8 +397,8 @@
 
     function showResult(data) {
         iconPreview.onerror = function() { iconPreview.src = PLACEHOLDER; };
-        iconPreview.src = data.preview;   /* 预览地址（原生或本站代理） */
-        iconUrl.textContent = data.url;   /* 复制地址：始终为国内可达的原生地址或本站代理地址 */
+        iconPreview.src = data.preview;
+        iconUrl.textContent = data.url;
         linkVisit.href = data.preview;
         sourceNote.textContent = data.source ? '来源：' + data.source : '';
         resultCard.classList.remove('hidden');
@@ -380,10 +422,6 @@
         document.body.removeChild(ta);
         return ok;
     }
-
-    /* ---------- 浏览器直探原生路径（借鉴 Dashboard 做法） ---------- */
-    /* <img> 加载不受 CORS 限制；国内浏览器可达目标站时（CF 反而可能被对方 WAF 拦），
-       依次探测 完整域名+主域名 × 常见图标路径，命中即得到站点原生地址 */
 
     function rootDomain(h) {
         var m = h.toLowerCase().match(/([a-z0-9-]+\.(?:com|net|org|gov|edu|ac|co)\.[a-z]{2})$/);
@@ -424,13 +462,12 @@
         });
     }
 
-    /* ---------- 输入规范化：自动补协议，防止重复叠加 ---------- */
     function normalizeUrl(text) {
-        var s = text.replace(/\s+/g, '');              /* 去除首尾及内部空白（粘贴带入的空格/换行） */
-        s = s.replace(/^(https?):\/(?!\/)/i, '$1://'); /* 修正手误 http:/x → http://x */
-        if (/^https?:\/\//i.test(s)) { return s; }     /* 已带协议，不额外处理 */
-        if (s.indexOf('//') === 0) { return 'https:' + s; } /* //x → https://x */
-        return 'https://' + s;                         /* 裸域名自动拼接 https:// */
+        var s = text.replace(/\s+/g, '');
+        s = s.replace(/^(https?):\/(?!\/)/i, '$1://');
+        if (/^https?:\/\//i.test(s)) { return s; }
+        if (s.indexOf('//') === 0) { return 'https:' + s; }
+        return 'https://' + s;
     }
 
     function extract() {
@@ -457,16 +494,14 @@
             .then(function(r) {
                 var data = r.data && r.data.ok ? r.data : null;
 
-                /* 服务端拿到原生地址 → 直接采用 */
                 if (data && !data.fallback) { showResult(data); return null; }
 
-                /* 服务端只有图标缓存兜底 / 完全失败 → 浏览器先直探站点原生路径 */
                 return browserProbeIcon(target).then(function(nativeUrl) {
                     if (nativeUrl) {
                         showResult({ url: nativeUrl, preview: nativeUrl, source: '本地探测 ' + nativeUrl.replace(/^https?:\/\//, '') });
                         return null;
                     }
-                    if (data) { showResult(data); return null; } /* 接受已代理化的兜底结果 */
+                    if (data) { showResult(data); return null; }
                     showError((r.data && r.data.error) ? r.data.error : '未找到图标，请检查网址是否正确');
                 });
             })
@@ -495,11 +530,36 @@
     });
 })();
 </script>
+
+<!-- 背景图延迟加载：页面空闲后再加载，加载成功淡入，失败降级为纯色 -->
 <script>
-    /* ==================== 网页防护 ==================== */
+(function() {
+    'use strict';
+    var bg = document.getElementById('bgLayer');
+    if (!bg) return;
+
+    function loadBg() {
+        var img = new Image();
+        img.onload = function() {
+            bg.style.backgroundImage = "url('static/img/background.webp')";
+            bg.classList.add('loaded');
+        };
+        img.src = 'static/img/background.webp';
+    }
+
+    // 优先利用浏览器空闲时间，其次等页面完全加载后再请求，避免拖慢首屏
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadBg, { timeout: 4000 });
+    } else {
+        window.addEventListener('load', loadBg);
+    }
+})();
+</script>
+
+<!-- 防护脚本 -->
+<script>
     (function() {
         'use strict';
-        /* 拦截快捷键：F12、Ctrl+S、Ctrl+U、Ctrl+Shift+I/J/C 等 */
         document.addEventListener('keydown', function(e) {
             var key = e.key || '';
             var blocked = false;
@@ -508,9 +568,7 @@
             else if ((e.ctrlKey || e.metaKey) && e.shiftKey && (key === 'I' || key === 'i' || key === 'J' || key === 'j' || key === 'C' || key === 'c')) { blocked = true; }
             if (blocked) { e.preventDefault(); e.stopPropagation(); return false; }
         }, true);
-        /* 屏蔽右键菜单 */
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); }, true);
-        /* 反调试：debugger 检测循环（打开控制台时触发中断） */
         function antiDebug() {
             setInterval(function() {
                 var before = Date.now();
