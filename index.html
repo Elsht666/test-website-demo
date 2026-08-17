@@ -67,17 +67,49 @@
         bottom: -140px; left: -120px;
     }
 
-    /* 背景图延迟加载层：首屏先显示纯色，图片加载完成后淡入，不拖慢页面 */
+    /* 高清背景层：默认隐藏，高清图加载完成后淡入 */
     #bgLayer {
         position: fixed;
         inset: 0;
         z-index: -1;
         background: var(--bg) no-repeat center center / cover;
         opacity: 0;
-        transition: opacity .6s ease;
+        transition: opacity .8s ease;
         pointer-events: none;
     }
     #bgLayer.loaded { opacity: 1; }
+
+    /* 全屏加载过渡遮罩：低清预览背景 + 环形 loading 动画 */
+    #loadingOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: var(--bg) url('static/img/background.webp') no-repeat center center / cover;
+        transition: opacity .8s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #loadingOverlay::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(244, 246, 251, .25);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    #loadingOverlay.fade-out { opacity: 0; pointer-events: none; }
+
+    /* 环形 loading 动画（绿色） */
+    .loader-ring {
+        width: 52px;
+        height: 52px;
+        border: 4px solid rgba(16, 185, 129, .2);
+        border-top-color: #10b981;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 1;
+    }
 
     .container { width: 100%; max-width: 620px; }
 
@@ -325,8 +357,12 @@
 </style>
 </head>
 <body>
-<!-- 背景图延迟加载层 -->
+<!-- 高清背景层（background1.webp 加载完成后淡入） -->
 <div id="bgLayer" aria-hidden="true"></div>
+<!-- 全屏加载过渡遮罩：低清预览 + 环形动画 -->
+<div id="loadingOverlay" aria-hidden="true">
+    <div class="loader-ring"></div>
+</div>
 <main class="container">
     <header>
         <h1>网站图标地址提取工具</h1>
@@ -531,28 +567,39 @@
 })();
 </script>
 
-<!-- 背景图延迟加载：页面空闲后再加载，加载成功淡入，失败降级为纯色 -->
+<!-- 背景图加载：后台异步加载高清图，成功后淡入高清层并淡出加载遮罩 -->
 <script>
 (function() {
     'use strict';
     var bg = document.getElementById('bgLayer');
-    if (!bg) return;
+    var overlay = document.getElementById('loadingOverlay');
+    var IMG_HD = 'static/img/background1.webp';
 
-    function loadBg() {
-        var img = new Image();
-        img.onload = function() {
-            bg.style.backgroundImage = "url('static/img/background.webp')";
-            bg.classList.add('loaded');
-        };
-        img.src = 'static/img/background.webp';
+    // 遮罩最少展示时长，避免加载过快导致闪烁
+    var MIN_SHOW = 600;
+    var start = Date.now();
+
+    function hideOverlay() {
+        var elapse = Date.now() - start;
+        var wait = Math.max(0, MIN_SHOW - elapse);
+        setTimeout(function() {
+            overlay.classList.add('fade-out');
+            setTimeout(function() {
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            }, 900);
+        }, wait);
     }
 
-    // 优先利用浏览器空闲时间，其次等页面完全加载后再请求，避免拖慢首屏
-    if ('requestIdleCallback' in window) {
-        requestIdleCallback(loadBg, { timeout: 4000 });
-    } else {
-        window.addEventListener('load', loadBg);
-    }
+    // 后台异步预加载高清图
+    var img = new Image();
+    img.onload = function() {
+        bg.style.backgroundImage = "url('" + IMG_HD + "')";
+        bg.classList.add('loaded');
+        hideOverlay();
+    };
+    // 高清图加载失败时直接降级为纯色背景，不再阻塞页面
+    img.onerror = function() { hideOverlay(); };
+    img.src = IMG_HD;
 })();
 </script>
 
