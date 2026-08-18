@@ -460,6 +460,7 @@
     var btnCopy = document.getElementById('btnCopy');
     var linkVisit = document.getElementById('linkVisit');
     var sourceNote = document.getElementById('sourceNote');
+    var cleanedOnce = false;   // 本次是否发生过代理前缀清洗
 
     function showError(msg) {
         errorBox.textContent = msg;
@@ -478,7 +479,9 @@
         iconPreview.src = data.preview;
         iconUrl.textContent = data.url;
         linkVisit.href = data.preview;
-        sourceNote.textContent = data.source ? '来源：' + data.source : '';
+        var note = data.source ? '来源：' + data.source : '';
+        if (cleanedOnce) note = (note ? note + ' · ' : '') + '已自动清洗代理前缀';
+        sourceNote.textContent = note;
         resultCard.classList.remove('hidden');
     }
 
@@ -548,6 +551,21 @@
         return 'https://' + s;
     }
 
+    /* 自动清洗代理前缀：识别字符串中多个 http/https，
+       截取最后一个协议头开始的完整原始链接，剥离前面所有代理域名，拿到纯净源站地址 */
+    function cleanProxyUrl(text) {
+        var s = text.replace(/\s+/g, '');
+        var re = /https?:\/\//gi;
+        var m, last = -1;
+        while ((m = re.exec(s)) !== null) { last = m.index; }
+        if (last > 0) {
+            // 前面存在代理前缀，截取最后协议头开始的纯净链接
+            s = s.slice(last);
+            cleanedOnce = true;
+        }
+        return s;
+    }
+
     function extract() {
         clearError();
         resultCard.classList.add('hidden');
@@ -555,9 +573,10 @@
         var raw = input.value.trim();
         if (!raw) { showError('请输入网址'); return; }
 
+        cleanedOnce = false;
         var target;
         try {
-            target = new URL(normalizeUrl(raw));
+            target = new URL(normalizeUrl(cleanProxyUrl(raw)));
         } catch (e) {
             showError('网址格式不正确，请检查后重试');
             return;
