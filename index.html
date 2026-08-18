@@ -311,6 +311,10 @@
         max-width: 700px;               /* 限制最大宽度，避免过大 */
         height: auto;                   /* 保持纵横比，防止拉伸变形 */
         filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        -webkit-user-drag: none;        /* 禁止拖拽 */
+        user-select: none;              /* 禁止选中 */
+        -webkit-user-select: none;
+        pointer-events: none;           /* 不接收鼠标点击事件 */
     }
 
     /* 移动端适配 */
@@ -357,11 +361,6 @@
         <div id="errorBox" class="error hidden"></div>
     </div>
 
-    <!-- ===== 独立蛇模块（新增，在输入卡片下方） ===== -->
-    <div class="snake-module">
-        <img src="static/svg/snake-Light.svg" alt="动态贪吃蛇">
-    </div>
-
     <!-- 结果卡片 -->
     <div id="resultCard" class="card result hidden">
         <div class="result-head">
@@ -373,6 +372,11 @@
             <a id="linkVisit" href="#" target="_blank" rel="noopener">在新标签页打开 ↗</a>
             <span id="sourceNote"></span>
         </div>
+    </div>
+
+    <!-- ===== 独立蛇模块（置于最底部，确保结果卡片渲染在其上层） ===== -->
+    <div class="snake-module">
+        <img src="static/svg/snake-Light.svg" alt="动态贪吃蛇" draggable="false">
     </div>
 
 </main>
@@ -561,6 +565,29 @@
     };
     // 加载失败则保持基础纯色背景，不影响页面
     img.src = 'static/img/background1.webp';
+})();
+</script>
+
+<!-- 禁止贪吃蛇图片拖拽/选中：JS 级拦截，弥补 CSS 在不同浏览器上的兼容差异 -->
+<script>
+(function() {
+    'use strict';
+    var snakeImg = document.querySelector('.snake-module img');
+    if (!snakeImg) return;
+
+    // 阻止原生拖拽（含首次长按后浏览器将其置为可拖拽状态的场景）
+    snakeImg.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    }, true);
+    // 阻止长按触发的系统拖拽/选中
+    snakeImg.addEventListener('mousedown', function(e) {
+        if (e.button === 0) e.preventDefault();
+    }, true);
+    // 阻止移动端长按系统菜单
+    snakeImg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, true);
 })();
 </script>
 
