@@ -247,6 +247,25 @@
         gap: 12px;
         flex-wrap: wrap;
     }
+    /* 状态灯：默认灰色（未提取），提取成功变绿（在线指示） */
+    .status-dot {
+        width: 12px;
+        height: 12px;
+        flex: none;
+        border-radius: 50%;
+        background: #cbd5e1;                       /* 灰色：待提取 */
+        box-shadow: 0 0 0 3px rgba(203, 213, 225, .25);
+        transition: background .3s, box-shadow .3s;
+    }
+    .status-dot.online {
+        background: #22c55e;                       /* 绿色：提取成功 */
+        animation: statusPulse 1.8s ease-in-out infinite;
+    }
+    /* 绿色呼吸光晕，模拟在线指示灯 */
+    @keyframes statusPulse {
+        0%, 100% { box-shadow: 0 0 4px rgba(34, 197, 94, .7), 0 0 0 3px rgba(34, 197, 94, .15); }
+        50%      { box-shadow: 0 0 10px rgba(34, 197, 94, 1), 0 0 0 5px rgba(34, 197, 94, .25); }
+    }
     #btnCopy {
         height: 38px;
         padding: 0 18px;
@@ -368,6 +387,7 @@
             <div class="result-url" id="iconUrl"></div>
         </div>
         <div class="result-actions">
+            <span id="statusDot" class="status-dot" title="提取状态"></span>
             <button id="btnCopy">📋 复制地址</button>
             <a id="linkVisit" href="#" target="_blank" rel="noopener">在新标签页打开 ↗</a>
             <span id="sourceNote"></span>
@@ -401,6 +421,7 @@
     var btnCopy = document.getElementById('btnCopy');
     var linkVisit = document.getElementById('linkVisit');
     var sourceNote = document.getElementById('sourceNote');
+    var statusDot = document.getElementById('statusDot');
 
     function showError(msg) {
         errorBox.textContent = msg;
@@ -420,6 +441,7 @@
         iconUrl.textContent = data.url;
         linkVisit.href = data.preview;
         sourceNote.textContent = data.source ? '来源：' + data.source : '';
+        statusDot.classList.add('online');   // 提取到图标及地址，点亮绿灯
         resultCard.classList.remove('hidden');
     }
 
