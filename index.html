@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="粘贴网址，一键提取网站 favicon 图标地址，支持复制。Cloudflare Pages 同域代理，服务端抓取解析">
 <link rel="icon" href="static/icon/favicon.ico" type="image/x-icon">
-<title>网站图标地址提取工具</title>
+<title>下载加速器</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
         --fg: #0f172a;
         --fg-muted: #64748b;
@@ -114,6 +113,52 @@
         border-radius: 999px;
         box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
     }
+
+    /* ===== 代理通道切换（新增） ===== */
+    .proxy-switch {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .proxy-opt {
+        flex: 1 1 180px;
+        min-width: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px 14px;
+        border: 2px solid transparent;              /* 未选中：透明 */
+        border-radius: var(--radius-md);
+        background: transparent;                    /* 未选中：透明背景 */
+        cursor: pointer;
+        transition: border-color .15s, box-shadow .15s, background .15s,
+                    transform .15s ease, color .15s;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    /* 鼠标靠近：轻微上浮 + 微缩放 + 阴影，强化交互反馈 */
+    .proxy-opt:hover:not(.active) {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 6px 16px -6px rgba(15, 23, 42, .25);
+    }
+    .proxy-opt:active:not(.active) { transform: translateY(0) scale(.98); }
+    .proxy-opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .proxy-name { font-size: 14px; font-weight: 700; color: var(--fg); }
+    .proxy-desc {
+        font-size: 11px;
+        color: var(--fg-muted);
+        word-break: break-all;
+    }
+    /* 选中：实心蓝色卡片，高对比 */
+    .proxy-opt.active {
+        border-color: var(--accent-deep);
+        background: linear-gradient(135deg, #5b7cfa, var(--accent-deep));
+        box-shadow: 0 4px 14px -4px rgba(59, 91, 219, .6);
+    }
+    .proxy-opt.active .proxy-name { color: #fff; }
+    .proxy-opt.active .proxy-desc { color: rgba(255, 255, 255, .9); }
 
     /* ===== 输入卡片（原样，无蛇干扰） ===== */
     .card {
@@ -348,8 +393,22 @@
 <div id="bgLayer" aria-hidden="true"></div>
 <main class="container">
     <header>
-        <h1>网站图标地址提取工具</h1>
+        <h1>下载器</h1>
     </header>
+
+    <!-- 代理通道切换（选择通用 / GitHub 专用） -->
+    <div class="proxy-switch" id="proxySwitch" role="radiogroup" aria-label="选择下载代理通道">
+        <label class="proxy-opt active">
+            <input type="radio" name="proxy" value="https://g.z321.cc.cd/" checked>
+            <span class="proxy-name">通用</span>
+            <span class="proxy-desc">https://g.z321.cc.cd/</span>
+        </label>
+        <label class="proxy-opt">
+            <input type="radio" name="proxy" value="https://777.z321.cc.cd/">
+            <span class="proxy-name">GitHub 专用</span>
+            <span class="proxy-desc">https://777.z321.cc.cd/</span>
+        </label>
+    </div>
 
     <!-- 输入卡片（原样） -->
     <div class="card">
@@ -545,6 +604,24 @@
                 btnCopy.textContent = '📋 复制地址';
                 btnCopy.classList.remove('copied');
             }, 1500);
+        });
+    });
+})();
+</script>
+
+<!-- 代理通道切换逻辑：选中态高亮 -->
+<script>
+(function() {
+    'use strict';
+    var switchBox = document.getElementById('proxySwitch');
+    if (!switchBox) return;
+
+    // 点击任一选项时同步高亮（label 内 radio 自动选中）
+    switchBox.addEventListener('change', function() {
+        var opts = switchBox.querySelectorAll('.proxy-opt');
+        var checked = switchBox.querySelector('input:checked');
+        opts.forEach(function(opt) {
+            opt.classList.toggle('active', opt.querySelector('input') === checked);
         });
     });
 })();
