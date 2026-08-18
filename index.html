@@ -461,6 +461,7 @@
     var linkVisit = document.getElementById('linkVisit');
     var sourceNote = document.getElementById('sourceNote');
     var cleanedOnce = false;   // 本次是否发生过代理前缀清洗
+    var cleanUrl = '';         // 清洗后的纯净原始链接
 
     function showError(msg) {
         errorBox.textContent = msg;
@@ -566,6 +567,33 @@
         return s;
     }
 
+    /* 当前选中的代理通道前缀 */
+    function currentProxy() {
+        var checked = document.querySelector('#proxySwitch input:checked');
+        return checked ? checked.value : 'https://g.z321.cc.cd/';
+    }
+
+    /* 拼接加速链接：代理前缀 + 纯净原始链接 */
+    function buildAccelLink() {
+        return currentProxy() + cleanUrl;
+    }
+
+    /* 校验清洗后的链接是否为有效下载链接：
+       必须为合法 http(s) 链接，且为常见文件下载地址（带下载文件扩展名或 GitHub releases 下载路径） */
+    function isValidDownloadLink(url) {
+        var u;
+        try { u = new URL(url); } catch (e) { return false; }
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+        var path = u.pathname.toLowerCase();
+        var exts = ['zip', 'exe', 'msi', 'apk', 'dmg', 'pkg', 'deb', 'rpm', 'tar', 'gz', 'tgz',
+                    'bz2', 'xz', '7z', 'rar', 'iso', 'bin', 'dll', 'appimage', 'jar', 'whl', 'ipa'];
+        for (var i = 0; i < exts.length; i++) {
+            if (path.slice(-exts[i].length - 1) === '.' + exts[i]) return true;
+        }
+        if (/\/releases\/download\//.test(path)) return true;
+        return false;
+    }
+
     function extract() {
         clearError();
         resultCard.classList.add('hidden');
@@ -576,7 +604,8 @@
         cleanedOnce = false;
         var target;
         try {
-            target = new URL(normalizeUrl(cleanProxyUrl(raw)));
+            cleanUrl = normalizeUrl(cleanProxyUrl(raw));
+            target = new URL(cleanUrl);
         } catch (e) {
             showError('网址格式不正确，请检查后重试');
             return;
@@ -614,7 +643,12 @@
     });
 
     btnCopy.addEventListener('click', function() {
-        copyText(iconUrl.textContent).then(function(ok) {
+        // 前置校验：无效下载链接禁止复制
+        if (!isValidDownloadLink(cleanUrl)) {
+            showError('请输入有效的下载链接');
+            return;
+        }
+        copyText(buildAccelLink()).then(function(ok) {
             if (!ok) { showError('复制失败，请手动选中文本复制'); return; }
             clearError();
             btnCopy.textContent = '已复制 ✓';
@@ -624,6 +658,17 @@
                 btnCopy.classList.remove('copied');
             }, 1500);
         });
+    });
+
+    // 在新标签页中打开：前置校验，无效则拦截；有效则打开拼接后的纯加速链接
+    linkVisit.addEventListener('click', function(e) {
+        if (!isValidDownloadLink(cleanUrl)) {
+            e.preventDefault();
+            showError('请输入有效的下载链接');
+            return;
+        }
+        e.preventDefault();
+        window.open(buildAccelLink(), '_blank', 'noopener,noreferrer');
     });
 })();
 </script>
