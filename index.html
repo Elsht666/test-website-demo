@@ -309,22 +309,23 @@
     #linkVisit {
         font-size: 13px;
         font-weight: 600;
-        color: var(--accent-deep);
+        color: var(--fg);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         height: 38px;
         padding: 0 16px;
         background: #fff;
-        border: 1px solid var(--border);
+        border: 1.5px solid #1e293b;   /* 与复制地址一致的黑色边框 */
         border-radius: var(--radius-sm);
-        transition: border-color .15s, background .15s, transform .12s, box-shadow .15s;
+        box-shadow: 0 3px 10px -2px rgba(15, 23, 42, .45);
+        transition: border-color .15s, background .15s, transform .12s, box-shadow .15s, color .15s;
     }
     #linkVisit:hover {
-        border-color: var(--accent);
-        background: #f5f7ff;
+        border-color: #1e293b;
+        background: #f8fafc;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px -4px rgba(59, 91, 219, .35);
+        box-shadow: 0 5px 14px -2px rgba(15, 23, 42, .5);
     }
     #linkVisit:active { transform: scale(.97); }
 
@@ -427,7 +428,7 @@
             <div class="result-url" id="iconUrl"></div>
         </div>
         <div class="result-actions">
-            <a id="linkVisit" href="#" target="_blank" rel="noopener">在新标签页打开 ↗</a>
+            <a id="linkVisit" href="#" target="_blank" rel="noopener">下载↗</a>
             <button id="btnCopy">📋 复制地址</button>
             <span id="sourceNote"></span>
         </div>
