@@ -336,7 +336,7 @@ function openLesson(index) {
   
   // 用 Ruffle 嵌入播放同目录下的 SWF 文件
   document.getElementById('playerContent').innerHTML = 
-    `<ruffle-player src="swf/${lesson.swf}" style="width:100%;height:100%;"></ruffle-player>`;
+    `<ruffle-player src="https://cdn.jsdelivr.net/gh/Elsht666/test-website-demo@main/swf/${lesson.swf}" style="width:100%;height:100%;"></ruffle-player>`;
   
   document.getElementById('prevBtn').disabled = (index === 0);
   document.getElementById('nextBtn').disabled = (index === data.length - 1);
