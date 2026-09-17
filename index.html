@@ -40,8 +40,8 @@
         color: var(--fg);
         min-height: 100vh;
         display: flex;
-        justify-content: center;
-        padding: clamp(32px, 6vw, 64px) 16px;
+        justify-content: flex-start;
+        padding: clamp(32px, 6vw, 64px) 16px clamp(32px, 6vw, 64px) clamp(32px, 5vw, 80px);
         position: relative;
         overflow-x: hidden;
     }
@@ -117,22 +117,22 @@
     /* ===== 左右分栏布局：左侧方法栏 + 右侧工具区 ===== */
     .layout {
         display: flex;
-        gap: 22px;
+        gap: 28px;
         align-items: flex-start;
         width: 100%;
-        max-width: 1080px;
+        max-width: 1380px;
     }
     .layout .container { margin: 0 auto; flex: 0 1 620px; }
 
     .sidebar {
-        flex: 0 0 250px;
-        width: 250px;
+        flex: 0 0 340px;
+        width: 340px;
         position: sticky;
         top: clamp(32px, 6vw, 64px);
         background: #fbfcfe;             /* 与右侧输入框同款底色 */
         border: 1px solid var(--border); /* 与右侧输入框同款外边框 */
         border-radius: var(--radius-md);
-        padding: 14px 12px 12px;
+        padding: 16px 14px 14px;
         max-height: calc(100vh - 112px);
         overflow-y: auto;
         scrollbar-width: none;          /* Firefox：隐藏滚动条，保留滚轮滚动 */
@@ -150,6 +150,32 @@
         gap: 8px;
     }
     .sidebar-head small { font-size: 11px; color: var(--fg-faint); font-weight: 600; }
+    .speed-summary {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 2px 10px;
+        padding: 5px 11px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--fg-muted);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .speed-summary::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ok);
+        flex: none;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, .15);
+    }
+    .speed-summary b { color: var(--fg); font-weight: 700; }
     .speed-btn {
         flex: none;
         height: 26px;
@@ -169,16 +195,36 @@
     .method-speed {
         margin-left: auto;
         flex: none;
-        font-size: 10px;
+        font-size: 10.5px;
         font-weight: 700;
-        color: var(--ok);
-        background: rgba(5, 150, 105, .12);
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
         border-radius: 999px;
-        padding: 1px 7px;
+        padding: 2px 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+        cursor: default;
+        box-shadow: 0 1px 2px rgba(5, 150, 105, .12);
+        transition: transform .15s, box-shadow .15s, filter .15s;
     }
-    .method-speed.slow { color: #b45309; background: rgba(245, 158, 11, .14); }
-    .method-speed.bad { color: var(--danger-fg); background: var(--danger-bg); }
-    .method-speed.cors { color: #475569; background: rgba(100, 116, 139, .16); }
+    .method-speed::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        flex: none;
+    }
+    .method-speed:hover { transform: translateY(-1px); filter: brightness(1.02); box-shadow: 0 2px 6px rgba(5, 150, 105, .25); }
+    .method-speed.slow { color: #b45309; background: #fffbeb; border-color: #fde68a; box-shadow: 0 1px 2px rgba(245, 158, 11, .15); }
+    .method-speed.slow:hover { box-shadow: 0 2px 6px rgba(245, 158, 11, .28); }
+    .method-speed.bad { color: var(--danger-fg); background: var(--danger-bg); border-color: var(--danger-border); box-shadow: 0 1px 2px rgba(185, 28, 28, .12); }
+    .method-speed.bad:hover { box-shadow: 0 2px 6px rgba(185, 28, 28, .25); }
+    .method-speed.cors { color: #475569; background: #f1f5f9; border-color: #e2e8f0; box-shadow: 0 1px 2px rgba(71, 85, 105, .12); }
+    .method-speed.cors:hover { box-shadow: 0 2px 6px rgba(71, 85, 105, .22); }
     .method-list {
         display: flex;
         flex-direction: column;
@@ -192,7 +238,7 @@
         display: flex;
         flex-direction: column;
         gap: 0;
-        padding: 5px 10px;
+        padding: 8px 10px 9px;
         border: 2px solid transparent;
         border-radius: var(--radius-md);
         cursor: pointer;
@@ -202,7 +248,7 @@
     }
     .method-item:hover:not(.active) { background: var(--accent-soft); }
     .method-item input { position: absolute; opacity: 0; pointer-events: none; }
-    .method-top { display: flex; align-items: center; gap: 7px; }
+    .method-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .method-num {
         flex: none;
         font-size: 10px;
@@ -213,7 +259,16 @@
         border-radius: 999px;
         padding: 1px 7px;
     }
-    .method-name { font-size: 13px; font-weight: 700; color: var(--fg); }
+    .method-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--fg);
+    }
     .method-desc {
         font-size: 10.5px;
         line-height: 1.35;
@@ -241,12 +296,103 @@
     .method-item.active .method-desc { color: rgba(255, 255, 255, .9); }
     .method-item.active .method-note { color: rgba(255, 255, 255, .78); }
     .method-item.active .method-num { background: rgba(255, 255, 255, .2); color: #fff; }
-    /* 选中态：速度徽章使用高对比白底白字，避免被蓝色背景吞掉 */
+    /* 选中态：速度徽章保留各自状态底色（绿=快 / 黄=慢 / 红=不可用 / 灰=受限·未知），
+       不随选中态渲染成蓝色；白色描边用于与蓝色背景区分 */
     .method-item.active .method-speed {
-        color: #fff;
-        background: rgba(255, 255, 255, .24);
-        border: 1px solid rgba(255, 255, 255, .55);
+        color: #047857;
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, .35);
     }
+    .method-item.active .method-speed.slow {
+        color: #b45309;
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+    .method-item.active .method-speed.bad {
+        color: var(--danger-fg);
+        background: var(--danger-bg);
+        border-color: var(--danger-border);
+    }
+    .method-item.active .method-speed.cors {
+        color: #475569;
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+    }
+
+    /* 速度进度条：相对最快通道的占比，仿测速报告条形图 */
+    .method-bar {
+        display: block;
+        width: 100%;
+        height: 10px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: #e8edf3;
+        overflow: hidden;
+    }
+    .method-bar i {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #34d399, #059669);
+        animation: growBar .8s cubic-bezier(.22, .8, .3, 1);
+    }
+    @keyframes growBar { from { width: 0; } }
+    .method-bar i.bar-slow { background: linear-gradient(90deg, #fbbf24, #d97706); }
+    .method-bar i.bar-cors { background: linear-gradient(90deg, #94a3b8, #64748b); }
+    .method-bar i.bar-bad  { background: linear-gradient(90deg, #f87171, #dc2626); }
+    .method-item.active .method-bar { background: rgba(255, 255, 255, .18); }
+    .method-item.active .method-bar i { background: linear-gradient(90deg, #fff, #e0e7ff); }
+
+    /* 悬停测速数据浮层（深色卡片，仿测速报告头部风格） */
+    .speed-tip {
+        position: fixed;
+        z-index: 1200;
+        min-width: 196px;
+        max-width: 260px;
+        background: #0d1117;
+        color: #e6edf3;
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 12px;
+        line-height: 1.5;
+        box-shadow: 0 16px 40px -8px rgba(13, 17, 23, .5);
+        opacity: 0;
+        transform: translateY(4px);
+        pointer-events: none;
+        transition: opacity .16s ease, transform .16s ease;
+    }
+    .speed-tip.show { opacity: 1; transform: translateY(0); }
+    .speed-tip .tip-name { font-size: 11px; color: #8b949e; margin-bottom: 2px; }
+    .speed-tip .tip-speed {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -.2px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+        font-variant-numeric: tabular-nums;
+    }
+    .speed-tip .tip-dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb950; flex: none; }
+    .speed-tip .tip-dot.slow { background: #d29922; }
+    .speed-tip .tip-dot.cors { background: #8b949e; }
+    .speed-tip .tip-dot.bad  { background: #f85149; }
+    .speed-tip .tip-dot.none { background: #6e7681; }
+    .speed-tip .tip-dot.unknown { background: #8b949e; }
+    .speed-tip .tip-rows { border-top: 1px solid rgba(255, 255, 255, .08); padding-top: 8px; }
+    .speed-tip .tip-rows div {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-size: 11.5px;
+        color: #8b949e;
+        margin-top: 3px;
+    }
+    .speed-tip .tip-rows b { color: #e6edf3; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .speed-tip .tip-status { margin-top: 8px; font-size: 11px; color: #8b949e; }
+    .speed-tip .tip-status b { color: #e6edf3; }
 
     /* 侧栏内自定义前缀输入行（卡片式：渐变头部 + 输入框，无阴影） */
     .sidebar .custom-row {
@@ -314,6 +460,117 @@
     }
     .sidebar #customPrefix::placeholder { color: #a8b3c5; }
 
+    /* 侧栏底部帮助按钮：点击弹出「无法下载？」提示弹窗 */
+    .help-btn {
+        width: 100%;
+        margin: 12px 2px 0;
+        padding: 11px 13px;
+        background: linear-gradient(135deg, #eef2ff, #f8faff);
+        border: 1px solid #dbe4f0;
+        border-radius: var(--radius-md);
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 800;
+        color: var(--accent-deep);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition: border-color .15s, box-shadow .15s, transform .12s, filter .15s;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    .help-btn::before {
+        content: '?';
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--accent-deep);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+    }
+    .help-btn:hover:not(:disabled) {
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px -4px rgba(59, 91, 219, .35);
+        transform: translateY(-1px);
+        filter: saturate(1.05);
+    }
+    .help-btn:active:not(:disabled) { transform: scale(.97); }
+
+    /* 提示弹窗 */
+    .modal-mask {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(15, 23, 42, .45);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        animation: maskIn .2s ease;
+    }
+    @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+        width: 100%;
+        max-width: 430px;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 24px 60px -12px rgba(15, 23, 42, .45);
+        overflow: hidden;
+        animation: modalIn .28s cubic-bezier(.2, .8, .3, 1);
+    }
+    @keyframes modalIn {
+        from { opacity: 0; transform: translateY(14px) scale(.97); }
+        to   { opacity: 1; transform: none; }
+    }
+    .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px 12px;
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--fg);
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-close {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        border: 0;
+        color: var(--fg-muted);
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: #e2e8f0; color: var(--fg); }
+    .modal-body { padding: 16px 20px 20px; font-size: 13.5px; line-height: 1.8; color: var(--fg-muted); }
+    .modal-body ul { margin: 0; padding-left: 18px; }
+    .modal-body li { margin-top: 8px; }
+    .modal-body li:first-child { margin-top: 0; }
+    .modal-body b { color: var(--fg); font-weight: 700; }
+    .modal-body .hl {
+        background: var(--accent-soft);
+        color: var(--accent-deep);
+        padding: 1px 7px;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+
     /* 窄屏：侧栏转为顶部横向滚动条，工具区恢复居中 */
     @media (max-width: 860px) {
         .layout { flex-direction: column; gap: 14px; }
@@ -327,7 +584,7 @@
         }
         .sidebar-head { padding-bottom: 10px; }
         .method-list { flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
-        .method-item { flex: 0 0 172px; }
+        .method-item { flex: 0 0 220px; }
         .sidebar .custom-row { margin-top: 8px; }
     }
 
@@ -563,6 +820,7 @@
 
     /* 移动端适配 */
     @media (max-width: 520px) {
+        body { padding: 20px 14px; }
         .card { padding: 16px; border-radius: 14px; }
         header { margin-bottom: 24px; }
         header p { font-size: 13px; padding: 5px 12px; }
@@ -597,6 +855,7 @@
             <span>加速通道</span>
             <button id="btnSpeed" class="speed-btn" type="button">⇅ 测速排序</button>
         </div>
+        <div class="speed-summary" id="speedSummary">点击「⇅ 测速排序」开始测速</div>
         <div class="method-list" id="methodList" role="radiogroup" aria-label="选择加速通道"></div>
         <div class="custom-row hidden" id="customRow">
             <div class="custom-head">
@@ -606,7 +865,26 @@
             <input id="customPrefix" type="text" spellcheck="false" autocomplete="off"
                    placeholder="https://你的加速前缀/（末尾自动补 /）">
         </div>
+        <button class="help-btn" id="helpBtn" type="button">无法下载？</button>
     </aside>
+
+    <!-- 无法下载？提示弹窗 -->
+    <div class="modal-mask hidden" id="helpMask">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="无法下载">
+            <div class="modal-head">
+                <span>无法下载？</span>
+                <button class="modal-close" id="helpClose" type="button" aria-label="关闭">✕</button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li>卡在最后一点一直没完成：多半是连接被掐断，换 <b>Chrome / Edge / Firefox</b> 等浏览器重试</li>
+                    <li>也可以点「⇅ 测速排序」，切换到其他可用通路再试</li>
+                    <li>想要更高速率：多数加速站的高速节点需注册并购买 <b>VIP / 会员</b>，免费公益通道通常限速、不稳定</li>
+                    <li>如果你有自己搭的或买的通路：选「<span class="hl">自定义前缀</span>」通道，在下方输入你的加速地址即可</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <main class="container">
     <header>
@@ -617,24 +895,22 @@
     (function() {
         'use strict';
         // 通路配置：前两个为你的自建通道，后几个为公共冗余通道，可自行增删
-        // 已弃用（不再测速/排序/显示）：gh.llkk.cc、kkgithub 镜像
-        // type: prefix=前缀拼接 | replace=域名替换 | jsdelivr=jsDelivr 专用 | custom=自定义前缀
+        // 已弃用（不再测速/排序/显示）：gh.llkk.cc、kkgithub 镜像、jsDelivr CDN
+        // type: prefix=前缀拼接 | replace=域名替换 | custom=自定义前缀
         var PROXY_CHANNELS = [
-            { type: 'prefix',   name: '通用（自建）',       value: 'https://g.z321.cc.cd/',     desc: 'https://g.z321.cc.cd/',     note: '你的自建通道，任意直链' },
-            { type: 'prefix',   name: 'GitHub 专用（自建）', value: 'https://777.z321.cc.cd/',   desc: 'https://777.z321.cc.cd/',   note: '你的自建通道，GitHub 文件' },
+            { type: 'prefix',   name: '通用（小帅）',       value: 'https://g.z321.cc.cd/',     desc: 'https://g.z321.cc.cd/',     note: '你的小帅通道，任意直链' },
+            { type: 'prefix',   name: 'GitHub 专用（小帅）', value: 'https://777.z321.cc.cd/',   desc: 'https://777.z321.cc.cd/',   note: '你的小帅通道，GitHub 文件' },
             { type: 'prefix',   name: 'gh-proxy.com',       value: 'https://gh-proxy.com/',     desc: 'https://gh-proxy.com/',     note: 'Release / Raw / Archive / Clone' },
             { type: 'prefix',   name: 'ghproxy.net',        value: 'https://ghproxy.net/',      desc: 'https://ghproxy.net/',      note: 'Release / Archive / 单文件' },
             { type: 'prefix',   name: 'gh-proxy.at9.net',   value: 'https://gh-proxy.at9.net/', desc: 'https://gh-proxy.at9.net/', note: 'Release / Raw / 直链（部分链路待验证）' },
-            { type: 'jsdelivr', name: 'jsDelivr CDN',       value: 'jsdelivr',                 desc: 'cdn.jsdelivr.net',          note: '仅源码包 / Raw，不支持 Release' },
             { type: 'custom',   name: '自定义前缀',          value: '__custom__',               desc: '粘贴任意加速前缀',           note: '自己填加速站前缀，防单点失效' }
         ];
 
         /* ===== 测速 =====
-           测试文件：git 仓库源码包（约 13MB，稳定）；jsDelivr 用 npm 大文件测真实吞吐。
+           测试文件：git 仓库源码包（约 13MB，稳定），各前缀通道用同一文件测真实吞吐。
            每通道最多读取 1MB 或 4 秒，几秒内完成全部测试。
            公共代理站均允许跨域，浏览器端可直接实测用户到代理的真实速度。 */
         var TEST_URL = 'https://github.com/git/git/archive/refs/heads/master.zip';
-        var JSDELIVR_TEST_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';  // 约 1.3MB
         var MAX_BYTES = 1024 * 1024;   // 单通道最多读取 1MB
         var MAX_TIME = 4000;           // 单通道读取上限 4 秒
         var TIMEOUT = 10000;           // 连接超时
@@ -650,18 +926,6 @@
             else u.hostname = 'kkgithub.com';
             return u.href;
         }
-        function jsDelivrUrl(url) {
-            var m = new URL(url).pathname.match(/^\/([^/]+)\/([^/]+)\/(raw|archive)\/(.+)$/);
-            if (!m) return '';
-            var user = m[1], repo = m[2], kind = m[3], rest = m[4];
-            if (kind === 'raw') {
-                var slash = rest.indexOf('/');
-                if (slash < 0) return '';
-                return 'https://cdn.jsdelivr.net/gh/' + user + '/' + repo + '@' + rest.slice(0, slash) + '/' + rest.slice(slash + 1);
-            }
-            var tag = rest.replace(/^refs\/heads\//, '').replace(/^refs\/tags\//, '');
-            return 'https://cdn.jsdelivr.net/gh/' + user + '/' + repo + '@' + tag;
-        }
 
         function testUrlFor(c) {
             if (c.type === 'custom') {
@@ -672,7 +936,6 @@
             }
             if (c.type === 'prefix') return c.value + TEST_URL;
             if (c.type === 'replace') return kkGitHubUrl(TEST_URL);
-            if (c.type === 'jsdelivr') return JSDELIVR_TEST_URL;
             return '';
         }
 
@@ -751,29 +1014,49 @@
             if (!list) return;
             var checked = list.querySelector('input:checked');
             var checkedVal = checked ? checked.value : '';
-            // 测速后隐藏不可用 / 超时的通路（CORS受限、未填前缀保留），可见项重新编号
-            var visible = [];
-            for (var i = 0; i < PROXY_CHANNELS.length; i++) {
-                var c = PROXY_CHANNELS[i];
-                if (speedTested && c.hide) continue;
-                visible.push(c);
+            // 测速后保留全部通路（不可用/超时标注为「未知」），可见项重新编号
+            var visible = PROXY_CHANNELS.slice();
+            // 计算最快通道速度，用于进度条占比
+            var maxK = 0;
+            for (var k = 0; k < visible.length; k++) {
+                if (visible[k].kbps > maxK) maxK = visible[k].kbps;
             }
-            if (visible.length === 0) visible = PROXY_CHANNELS.slice();   // 兜底：全不可用时全部显示
             var html = '';
             for (var j = 0; j < visible.length; j++) {
                 var c = visible[j];
                 var isChecked = (c.value === checkedVal) || (!checkedVal && j === 0);
                 var badge = c.speedText || '';
                 var cls = 'method-speed';
-                if (badge && !c.ok) cls += (c.corsOnly ? ' cors' : ' bad');
-                else if (badge && c.ok && c.kbps > 0 && c.kbps < 1024) cls += ' slow';
-                html += '<label class="method-item' + (isChecked ? ' active' : '') + '">' +
+                var barCls = 'bar-ok';
+                var status = 'none';
+                if (badge && !c.ok) {
+                    if (c.unknown) {
+                        cls += ' cors';            // 未知：中性灰色徽章
+                        barCls = 'bar-cors';
+                        status = 'unknown';
+                    } else {
+                        cls += (c.corsOnly ? ' cors' : ' bad');
+                        barCls = c.corsOnly ? 'bar-cors' : 'bar-bad';
+                        status = c.corsOnly ? 'cors' : 'bad';
+                    }
+                } else if (badge && c.ok) {
+                    status = (c.kbps > 0 && c.kbps < 1024) ? 'slow' : 'ok';
+                    if (c.kbps > 0 && c.kbps < 1024) { cls += ' slow'; barCls = 'bar-slow'; }
+                }
+                var pct = (c.ok && maxK > 0 && c.kbps > 0) ? Math.max(4, Math.round(c.kbps / maxK * 100)) : 0;
+                var bar = (badge && c.ok && c.kbps > 0) ? '<span class="method-bar"><i class="' + barCls + '" style="width:' + pct + '%"></i></span>' : '';
+                var dataAttrs = ' data-name="' + c.name + '"'
+                        + ' data-speed="' + (c.speedText || '') + '"'
+                        + ' data-ttfb="' + (c.ttfb || 0) + '"'
+                        + ' data-total="' + (c.total || 0) + '"'
+                        + ' data-ms="' + (c.ms || 0) + '"'
+                        + ' data-status="' + status + '"';
+                html += '<label class="method-item' + (isChecked ? ' active' : '') + '"' + dataAttrs + '>' +
                         '<input type="radio" name="method" value="' + c.value + '" data-type="' + c.type + '"' + (isChecked ? ' checked' : '') + '>' +
-                        '<span class="method-top"><span class="method-num">通路' + (j + 1) + '</span><span class="method-name">' + c.name + '</span>' +
-                        (badge ? '<span class="' + cls + '"' + (c.corsOnly ? ' title="站点可达但禁止网页内测速；用「下载↗」直接打开仍可用"' : '') + '>' + badge + '</span>' : '') +
+                        '<span class="method-row"><span class="method-num">通路' + (j + 1) + '</span><span class="method-name">' + c.name + '</span>' +
+                        (badge ? '<span class="' + cls + '">' + badge + '</span>' : '') +
                         '</span>' +
-                        '<span class="method-desc">' + c.desc + '</span>' +
-                        '<span class="method-note">' + c.note + '</span>' +
+                        bar +
                         '</label>';
             }
             list.innerHTML = html;
@@ -807,21 +1090,23 @@
                     var c = PROXY_CHANNELS[i];
                     c.ok = r.ok;
                     c.corsOnly = false;
-                    // 不可用 / 超时 → 测速后从列表隐藏；CORS受限、未填前缀保留
-                    c.hide = !r.ok && r.err !== 'cors' && r.err !== 'noprefix';
+                    c.unknown = false;
+                    c.hide = false;   // 不再隐藏任何通路：不可用/超时保留并标注「未知」
                     c.ttfb = r.ttfb || 0;
+                    c.total = r.total || 0;
+                    c.ms = r.ms || 0;
                     c.kbps = (r.ms > 0 && r.total > 0) ? (r.total / 1024) / (r.ms / 1000) : 0;
                     if (r.total > 0 && r.total < 65536) c.kbps = 0;   // 小文件只测连接时间
                     if (r.ok) {
                         if (r.total >= 65536) c.speedText = formatSpeed(c.kbps);
                         else c.speedText = '连接 ' + c.ttfb + 'ms';
-                    } else if (r.err === 'timeout') { c.speedText = '超时'; }
+                    } else if (r.err === 'timeout') { c.speedText = '未知'; c.unknown = true; }
                     else if (r.err === 'noprefix') { c.speedText = '未填前缀'; }
                     else if (r.err === 'cors') { c.speedText = 'CORS受限'; c.corsOnly = true; }
-                    else { c.speedText = '不可用'; }
+                    else { c.speedText = '未知'; c.unknown = true; }
                 });
 
-                // 排序：可用有吞吐(3) → 可用仅连接(2) → CORS受限可下载(1) → 不可用(0)；组内按速度降序 / 连接升序
+                // 排序：可用有吞吐(3) → 可用仅连接(2) → CORS受限可下载(1) → 不可用/未知(0)；组内按速度降序 / 连接升序
                 PROXY_CHANNELS.sort(function(a, b) {
                     function grp(x) {
                         if (x.ok) return (x.kbps > 0) ? 3 : 2;
@@ -845,11 +1130,108 @@
                     if (PROXY_CHANNELS[i].ok) { selectMethod(PROXY_CHANNELS[i].value); break; }
                 }
 
+                // 更新侧栏测速摘要：测速时间 + 当前最快通道
+                var sum = document.getElementById('speedSummary');
+                if (sum) {
+                    var fastest = null;
+                    for (var i2 = 0; i2 < PROXY_CHANNELS.length; i2++) {
+                        if (PROXY_CHANNELS[i2].ok && PROXY_CHANNELS[i2].kbps > 0) { fastest = PROXY_CHANNELS[i2]; break; }
+                    }
+                    if (fastest) {
+                        var now = new Date();
+                        var hh = ('0' + now.getHours()).slice(-2);
+                        var mm = ('0' + now.getMinutes()).slice(-2);
+                        sum.innerHTML = '上次测速 ' + hh + ':' + mm + ' · 最快 <b>' + fastest.name + ' ' + fastest.speedText + '</b>';
+                    } else {
+                        sum.innerHTML = '测速完成 · 暂无可用通道';
+                    }
+                }
+
                 btn.disabled = false;
                 btn.textContent = oldText;
                 testing = false;
             });
         }
+
+        /* ===== 悬停浮层：展示该通道的测速明细（速度 / TTFB / 读取量 / 耗时 / 状态） ===== */
+        var TIP_STATUS = { ok: '通道可用', slow: '速度较慢', cors: 'CORS 受限 · 可直接下载', bad: '通道不可用', unknown: '未知', none: '尚未测速' };
+
+        function fmtBytes(b) {
+            b = +b || 0;
+            if (b <= 0) return '—';
+            if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB';
+            if (b >= 1024) return Math.round(b / 1024) + ' KB';
+            return b + ' B';
+        }
+
+        function fmtMs(ms) {
+            ms = +ms || 0;
+            if (ms >= 1000) return (ms / 1000).toFixed(1) + ' s';
+            return ms + ' ms';
+        }
+
+        function buildTipHTML(item) {
+            var name = item.getAttribute('data-name') || '';
+            var speed = item.getAttribute('data-speed') || '';
+            var ttfb = +item.getAttribute('data-ttfb') || 0;
+            var total = +item.getAttribute('data-total') || 0;
+            var ms = +item.getAttribute('data-ms') || 0;
+            var status = item.getAttribute('data-status') || 'none';
+            if (!speed && !ttfb && !total) {
+                return '<div class="tip-name">' + name + '</div>' +
+                       '<div class="tip-speed"><span class="tip-dot none"></span>未测速</div>' +
+                       '<div class="tip-status">点击「⇅ 测速排序」开始测速</div>';
+            }
+            var rows = '';
+            if (ttfb > 0) rows += '<div><span>首包 TTFB</span><b>' + ttfb + ' ms</b></div>';
+            if (total > 0) rows += '<div><span>读取数据</span><b>' + fmtBytes(total) + '</b></div>';
+            if (ms > 0) rows += '<div><span>测试耗时</span><b>' + fmtMs(ms) + '</b></div>';
+            return '<div class="tip-name">' + name + '</div>' +
+                   '<div class="tip-speed"><span class="tip-dot ' + status + '"></span>' + (speed || '—') + '</div>' +
+                   (rows ? '<div class="tip-rows">' + rows + '</div>' : '') +
+                   '<div class="tip-status">状态：<b>' + (TIP_STATUS[status] || status) + '</b></div>';
+        }
+
+        var tipEl = document.createElement('div');
+        tipEl.className = 'speed-tip';
+        document.body.appendChild(tipEl);
+
+        function placeTip(item) {
+            tipEl.innerHTML = buildTipHTML(item);
+            tipEl.classList.add('show');
+            tipEl.style.width = '';
+            var rect = item.getBoundingClientRect();
+            var tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+            var sb = document.querySelector('.sidebar');
+            var sbRect = sb ? sb.getBoundingClientRect() : rect;
+            var gap = 2;
+            // 水平方向：与左边栏右边框贴合（黑框左缘紧贴侧栏边框外侧），右侧空间不足时翻转到侧栏左侧
+            var left = sbRect.right + gap;
+            if (left + tw > window.innerWidth - 8) left = Math.max(8, sbRect.left - tw - gap);
+            // 垂直方向：与对应选项顶部对齐；超出视口上下边界时收缩到视口内
+            var top = rect.top;
+            if (top + th > window.innerHeight - 8) top = Math.max(8, window.innerHeight - th - 8);
+            tipEl.style.left = left + 'px';
+            tipEl.style.top = top + 'px';
+        }
+
+        function hideTip() { tipEl.classList.remove('show'); }
+
+        if (list) {
+            list.addEventListener('mouseover', function(e) {
+                var item = e.target && e.target.closest ? e.target.closest('.method-item') : null;
+                if (item) placeTip(item);
+            });
+            list.addEventListener('mouseout', function(e) {
+                var to = e.relatedTarget;
+                if (to && to.closest && to.closest('.method-item')) return;   // 仍悬浮在某个通道项内
+                hideTip();
+            });
+        }
+        var sb = document.querySelector('.sidebar');
+        if (sb) sb.addEventListener('scroll', hideTip, { passive: true });
+        window.addEventListener('scroll', hideTip, { passive: true });
+        window.addEventListener('resize', hideTip);
 
         // 初始渲染
         renderMethods();
@@ -1048,21 +1430,6 @@
         return u.href;
     }
 
-    /* jsDelivr 型通道：仅 Raw / 源码包（不支持 Release） */
-    function jsDelivrUrl(url) {
-        var m = new URL(url).pathname.match(/^\/([^/]+)\/([^/]+)\/(raw|archive)\/(.+)$/);
-        if (!m) return '';
-        var user = m[1], repo = m[2], kind = m[3], rest = m[4];
-        if (kind === 'raw') {
-            var slash = rest.indexOf('/');
-            if (slash < 0) return '';
-            return 'https://cdn.jsdelivr.net/gh/' + user + '/' + repo + '@' + rest.slice(0, slash) + '/' + rest.slice(slash + 1);
-        }
-        // archive：剥离 refs/heads/、refs/tags/ 前缀，保留 分支/标签 + 扩展名
-        var tag = rest.replace(/^refs\/heads\//, '').replace(/^refs\/tags\//, '');
-        return 'https://cdn.jsdelivr.net/gh/' + user + '/' + repo + '@' + tag;
-    }
-
     /* 拼接加速链接：按通道类型生成 */
     function buildAccelLink() {
         var ch = currentChannel();
@@ -1075,20 +1442,15 @@
         }
         if (ch.type === 'prefix') return ch.value + cleanUrl;
         if (ch.type === 'replace') return kkGitHubUrl(cleanUrl);
-        if (ch.type === 'jsdelivr') return jsDelivrUrl(cleanUrl);
         return ch.value + cleanUrl;
     }
 
     /* 校验当前通道是否支持该链接，返回 '' 表示支持，否则返回错误提示 */
     function channelAccepts(url) {
         var ch = currentChannel();
-        if (ch.type !== 'jsdelivr' && ch.type !== 'replace') return '';
+        if (ch.type !== 'replace') return '';
         var u;
         try { u = new URL(url); } catch (e) { return '链接格式不正确'; }
-        if (ch.type === 'jsdelivr') {
-            if (u.hostname === 'github.com' && (/\/raw\//.test(u.pathname) || /\/archive\//.test(u.pathname))) return '';
-            return 'jsDelivr 仅支持 GitHub 的 Raw / 源码包链接，请换其他通道';
-        }
         if (u.hostname === 'github.com' || u.hostname === 'raw.githubusercontent.com') return '';
         return 'kkgithub 镜像仅支持 github.com / raw.githubusercontent.com 链接';
     }
@@ -1225,8 +1587,24 @@
 })();
 </script>
 
-<!-- 背景图加载：后台异步加载高清图，不阻塞页面交互，加载完成后淡入 -->
+<!-- 无法下载？弹窗开关：打开 / 关闭（X、遮罩、Esc） -->
 <script>
+(function() {
+    'use strict';
+    var btn = document.getElementById('helpBtn');
+    var mask = document.getElementById('helpMask');
+    if (!btn || !mask) return;
+    function openModal() { mask.classList.remove('hidden'); }
+    function closeModal() { mask.classList.add('hidden'); }
+    btn.addEventListener('click', openModal);
+    var closeBtn = document.getElementById('helpClose');
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    mask.addEventListener('click', function(e) { if (e.target === mask) closeModal(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+})();
+</script>
+
+<!-- 背景图加载：后台异步加载高清图，不阻塞页面交互，加载完成后淡入 --><script>
 (function() {
     'use strict';
     var bg = document.getElementById('bgLayer');
