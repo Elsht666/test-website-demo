@@ -394,25 +394,25 @@
     .speed-tip .tip-status { margin-top: 8px; font-size: 11px; color: #8b949e; }
     .speed-tip .tip-status b { color: #e6edf3; }
 
-    /* 侧栏内自定义前缀输入行（右侧链接网址输入卡的缩小版：白底 + 粗黑描边 + 同款输入框） */
+    /* 侧栏内自定义前缀输入行（卡片式：渐变头部 + 输入框，无阴影） */
     .sidebar .custom-row {
         margin: 10px 2px 0;
-        padding: 12px;
-        border: 2px solid #1e293b;   /* 与右侧输入卡同款粗黑描边 */
+        padding: 0 0 10px;
+        border: 1px solid #dbe4f0;
         border-radius: var(--radius-md);
-        background: #fff;
-        box-shadow: 0 4px 12px -4px rgba(15, 23, 42, .18), 0 1px 3px rgba(15, 23, 42, .08);
+        background: #fbfcfe;
+        overflow: hidden;
         flex-direction: column;
         align-items: stretch;
-        gap: 9px;
+        gap: 8px;
     }
     .sidebar .custom-row .custom-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 1px;
-        background: none;           /* 去掉渐变头部，保持纯白卡片外观 */
-        border-bottom: 0;
+        padding: 7px 12px;
+        background: linear-gradient(135deg, #eef2ff, #f8faff);
+        border-bottom: 1px solid #e2e8f0;
     }
     .sidebar .custom-row .custom-label {
         font-size: 11px;
@@ -440,25 +440,23 @@
         padding: 1px 7px;
     }
     .sidebar #customPrefix {
-        width: 100%;
-        margin: 0;
-        flex: none;
-        height: 34px;                /* 右侧输入框(46px)的缩小版 */
+        width: calc(100% - 24px);
+        margin: 0 12px;
+        height: 34px;
         padding: 0 11px;
-        font-size: 12.5px;
-        font-family: inherit;        /* 与右侧输入框同款字体 */
+        font-size: 12px;
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
         color: var(--fg);
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
         outline: none;
-        background: #fbfcfe;         /* 与右侧输入框同款底色 */
+        background: #fff;
         transition: border-color .15s, box-shadow .15s, background .15s;
     }
     .sidebar #customPrefix:hover { border-color: #cbd5e1; }
     .sidebar #customPrefix:focus {
         border-color: var(--accent);
         background: #fff;
-        box-shadow: 0 0 0 3px var(--accent-soft);   /* 与右侧输入框同款聚焦光晕（缩小） */
     }
     .sidebar #customPrefix::placeholder { color: #a8b3c5; }
 
