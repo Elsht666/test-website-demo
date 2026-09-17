@@ -1,0 +1,5 @@
+# Cloudflare Pages 缓存配置
+# 背景图等静态图片长缓存，二次访问直接命中浏览器/CDN 缓存，不再回源传输
+
+/static/*
+  Cache-Control: public, max-age=31536000, immutable
