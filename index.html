@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="粘贴 GitHub / 任意下载链接，一键生成多通道加速下载地址（自建 + gh-proxy 系列 + 镜像站 + 自定义前缀），复制即用">
 <link rel="icon" href="static/icon/favicon.ico" type="image/x-icon">
-<title>下载加速器</title>
+<title>多通道下载站</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -94,13 +94,22 @@
 
     header { text-align: center; margin-bottom: 32px; }
     header h1 {
-        font-size: clamp(22px, 4.5vw, 28px);
+        font-size: clamp(26px, 5vw, 34px);
         font-weight: 800;
+        font-style: italic;
         letter-spacing: -.5px;
-        background: linear-gradient(120deg, #0f172a 30%, var(--accent-deep));
+        /* 流动渐变文字：渐变裁剪 + background-position 循环移动（借鉴 MasterHu Homepage 素材） */
+        background: linear-gradient(120deg, var(--accent) 0%, #9333ea 30%, #06b6d4 60%, var(--accent) 100%);
+        background-size: 200% auto;
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
+        animation: fluid-gradient 5s ease-in-out infinite;
+    }
+    @keyframes fluid-gradient {
+        0%   { background-position: 100% 50%; }
+        50%  { background-position: 0% 50%; }
+        100% { background-position: 100% 50%; }
     }
     header p {
         font-size: 14px;
@@ -113,6 +122,16 @@
         border-radius: 999px;
         box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
     }
+    /* 打字机轮播副标题：固定高度避免逐字跳动，::after 做闪烁光标 */
+    .site-motto { min-height: 1.6em; }
+    .site-motto::after {
+        content: '|';
+        margin-left: 2px;
+        color: var(--accent);
+        font-weight: 700;
+        animation: motto-blink 1s infinite;
+    }
+    @keyframes motto-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
     /* ===== 左右分栏布局：左侧方法栏 + 右侧工具区 ===== */
     .layout {
@@ -129,14 +148,17 @@
         width: 340px;
         position: sticky;
         top: clamp(32px, 6vw, 64px);
-        background: #fbfcfe;             /* 与右侧输入框同款底色 */
-        border: 1px solid var(--border); /* 与右侧输入框同款外边框 */
+        background: rgba(251, 252, 254, .72);
+        border: 1px solid rgba(255, 255, 255, .5);
         border-radius: var(--radius-md);
         padding: 16px 14px 14px;
         max-height: calc(100vh - 112px);
         overflow-y: auto;
-        scrollbar-width: none;          /* Firefox：隐藏滚动条，保留滚轮滚动 */
+        scrollbar-width: none;
         -ms-overflow-style: none;
+        backdrop-filter: blur(20px) saturate(1.6);
+        -webkit-backdrop-filter: blur(20px) saturate(1.6);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, .1);
     }
     .sidebar::-webkit-scrollbar { width: 0; height: 0; display: none; }
     .sidebar-head {
@@ -178,20 +200,43 @@
     .speed-summary b { color: var(--fg); font-weight: 700; }
     .speed-btn {
         flex: none;
-        height: 26px;
-        padding: 0 10px;
+        height: 28px;
+        padding: 0 14px;
         font-size: 11px;
-        font-weight: 700;
-        color: #fff;
-        background: linear-gradient(135deg, #5b7cfa, var(--accent-deep));
-        border-radius: 999px;
+        font-weight: 500;
+        color: #e2e8f0;
+        background: rgba(0, 0, 0, .35);
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: 12px;
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        box-shadow: 0 3px 8px -3px rgba(59, 91, 219, .5);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(20px) saturate(1.6);
+        -webkit-backdrop-filter: blur(20px) saturate(1.6);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 6px rgba(0, 0, 0, .2);
+        transition: transform .18s cubic-bezier(.2,.9,.3,1.2), box-shadow .25s, border-color .25s, color .25s, background .25s;
     }
-    .speed-btn:hover:not(:disabled) { transform: translateY(-1px); filter: saturate(1.1); }
+    .speed-btn::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: #4eff4e;
+        transform: translateX(-50%);
+        transition: width .3s;
+        box-shadow: 0 0 8px #4eff4e;
+    }
+    .speed-btn:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.05);
+    }
+    .speed-btn:hover:not(:disabled)::before { width: 60%; }
     .speed-btn:active:not(:disabled) { transform: scale(.97); }
+    .speed-btn:disabled { opacity: .6; cursor: default; }
     .method-speed {
         margin-left: auto;
         flex: none;
@@ -239,14 +284,36 @@
         flex-direction: column;
         gap: 0;
         padding: 8px 10px 9px;
-        border: 2px solid transparent;
+        border: 1px solid rgba(255, 255, 255, .4);
         border-radius: var(--radius-md);
         cursor: pointer;
-        transition: border-color .15s, background .15s, transform .15s;
+        transition: border-color .15s, background .15s, transform .18s cubic-bezier(.2,.9,.3,1.2), box-shadow .18s;
         -webkit-user-select: none;
         user-select: none;
+        background: linear-gradient(145deg, rgba(180, 195, 220, .25), rgba(180, 195, 220, .08));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 2px 6px rgba(15, 23, 42, .08);
     }
-    .method-item:hover:not(.active) { background: var(--accent-soft); }
+    .method-item:hover:not(.active) {
+        background: linear-gradient(145deg, rgba(180, 195, 220, .35), rgba(180, 195, 220, .15));
+        transform: translateY(-2px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 6px 14px rgba(15, 23, 42, .12);
+    }
+    .method-item::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2.5px;
+        border-radius: 2px;
+        background: #a3e635;
+        transform: translateX(-50%);
+        transition: width .3s;
+        box-shadow: 0 0 8px rgba(163, 230, 53, .5);
+    }
+    .method-item:hover:not(.active)::after {
+        width: 50%;
+    }
     .method-item input { position: absolute; opacity: 0; pointer-events: none; }
     .method-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .method-num {
@@ -840,12 +907,96 @@
         .snake-module img { max-width: 300px; }
     }
 
+    /* ===== 首屏加载遮罩：多层旋转动画（外环匀速 + 渐变弧反向 + 三轨道点公转 + 中心脉冲光晕）=====
+       离开方式：window.load 隐藏 + 5 秒安全兜底（借鉴 MasterHu Homepage 素材，配色适配浅色主题） */
+    .loading-mask {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 28px;
+        background: linear-gradient(135deg, #eef1fb, #e4e9f8);
+        opacity: 1; transform: scale(1);
+        transition: opacity .5s cubic-bezier(.4,0,.2,1),
+                    transform .5s cubic-bezier(.4,0,.2,1);
+    }
+    .loading-mask.hide { opacity: 0; transform: scale(1.06); pointer-events: none; }
+    .loading-mask .spinner {
+        position: relative; width: 72px; height: 72px; border-radius: 50%;
+        border: 1.5px solid rgba(79, 110, 247, .18);
+        box-shadow: 0 0 30px 2px rgba(79, 110, 247, .12);
+        animation: lm-outer-spin 6s linear infinite;
+    }
+    .loading-mask .spinner::before {
+        content: ""; position: absolute; inset: 8px; border-radius: 50%;
+        background: conic-gradient(
+            from 0deg, transparent 0%,
+            var(--accent) 25%, rgba(79, 110, 247, .5) 40%, transparent 65%
+        );
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+                mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+        animation: lm-inner-spin 1.4s cubic-bezier(.45, 0, .55, 1) infinite;
+    }
+    .loading-mask .spinner .dots {
+        position: absolute; top: 50%; left: 50%;
+        width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
+        background: var(--accent);
+        box-shadow:
+            0px -27px 0 -0.5px var(--accent),
+            23px 14px 0 -0.5px var(--accent),
+            -23px 14px 0 -0.5px var(--accent);
+        animation: lm-orbit 3s linear infinite;
+    }
+    .loading-mask .spinner .core {
+        position: absolute; top: 50%; left: 50%;
+        width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 12px 3px rgba(79, 110, 247, .4);
+        animation: lm-core-pulse 1.8s ease-in-out infinite;
+    }
+    .loading-mask .loading-text {
+        font-size: 14px; font-weight: 700; letter-spacing: 4px;
+        color: var(--fg-muted);
+        animation: lm-text-breath 2s ease-in-out infinite alternate;
+    }
+    @keyframes lm-outer-spin { to { transform: rotate(360deg); } }
+    @keyframes lm-inner-spin { to { transform: rotate(-360deg); } }
+    @keyframes lm-orbit { to { transform: rotate(360deg); } }
+    @keyframes lm-core-pulse {
+        0%, 100% { opacity: .4; transform: scale(.8); }
+        50%      { opacity: 1;  transform: scale(1.3); }
+    }
+    @keyframes lm-text-breath { 0% { opacity: .35; } 100% { opacity: 1; } }
+
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation: none !important; transition: none !important; }
     }
 </style>
 </head>
 <body>
+<!-- 首屏加载遮罩：页面资源加载完成后淡出（window.load + 5 秒兜底） -->
+<div class="loading-mask" id="loadingMask" aria-hidden="true">
+    <div class="spinner">
+        <div class="dots"></div>
+        <div class="core"></div>
+    </div>
+    <span class="loading-text">多通道下载站 · 加载中</span>
+</div>
+<script>
+(function() {
+    'use strict';
+    var mask = document.getElementById('loadingMask');
+    if (!mask) return;
+    var done = false;
+    function hide() {
+        if (done) return;
+        done = true;
+        mask.classList.add('hide');
+        setTimeout(function() { mask.style.display = 'none'; }, 600);
+    }
+    if (document.readyState === 'complete') hide();
+    else window.addEventListener('load', hide);
+    setTimeout(hide, 5000); /* 安全兜底：某资源卡住也不让遮罩挡住页面 */
+})();
+</script>
 <!-- 压缩图模糊层（毛玻璃效果，初始立即显示） -->
 <div id="bgBlur" aria-hidden="true"></div>
 <!-- 高清背景层（background1.webp 异步加载完成后淡入） -->
@@ -855,7 +1006,7 @@
     <aside class="sidebar">
         <div class="sidebar-head">
             <span>加速通道</span>
-            <button id="btnSpeed" class="speed-btn" type="button">⇅ 测速排序</button>
+            <button id="btnSpeed" class="speed-btn" type="button">点击测速</button>
         </div>
         <div class="speed-summary" id="speedSummary">点击「⇅ 测速排序」开始测速</div>
         <div class="method-list" id="methodList" role="radiogroup" aria-label="选择加速通道"></div>
@@ -879,6 +1030,7 @@
             </div>
             <div class="modal-body">
                 <ul>
+                    <li>官网「latest」跳转链接（如 <b>central.github.com/.../latest/win32</b>）不是直链：粘贴后点「提取」会自动解析成最新版本直链，再复制加速链接即可</li>
                     <li>卡在最后一点一直没完成：多半是连接被掐断，换 <b>Chrome / Edge / Firefox</b> 等浏览器重试</li>
                     <li>也可以点「⇅ 测速排序」，切换到其他可用通路再试</li>
                     <li>想要更高速率：多数加速站的高速节点需注册并购买 <b>VIP / 会员</b>，免费公益通道通常限速、不稳定</li>
@@ -890,7 +1042,8 @@
 
     <main class="container">
     <header>
-        <h1>下载器</h1>
+        <h1>多通道下载站</h1>
+        <p class="site-motto" id="siteMotto"></p>
     </header>
 
     <script>
@@ -1263,7 +1416,7 @@
     <div class="card">
         <div class="input-row">
             <input id="urlInput" type="text" spellcheck="false"
-                   placeholder="粘贴网站地址，如 https://www.github.com" autocomplete="off">
+                   placeholder="粘贴下载直链 / 官网 latest 跳转链接均可" autocomplete="off">
             <button id="btnExtract"><span class="spinner"></span><span id="btnExtractText">提取</span></button>
         </div>
         <div id="errorBox" class="error hidden"></div>
@@ -1328,10 +1481,12 @@
     function showResult(data) {
         iconPreview.onerror = function() { iconPreview.src = PLACEHOLDER; };
         iconPreview.src = data.preview;
-        iconUrl.textContent = data.url;
+        /* 结果框展示用于生成加速链接的源链接（latest 跳转链接已被替换为解析后的直链） */
+        iconUrl.textContent = cleanUrl || data.url;
         linkVisit.href = data.preview;
         var note = data.source ? '来源：' + data.source : '';
         if (cleanedOnce) note = (note ? note + ' · ' : '') + '已自动清洗代理前缀';
+        if (resolvedNote) note = (note ? note + ' · ' : '') + resolvedNote;
         sourceNote.textContent = note;
         resultCard.classList.remove('hidden');
     }
@@ -1470,9 +1625,73 @@
             if (path.slice(-exts[i].length - 1) === '.' + exts[i]) return true;
         }
         if (/\/releases\/download\//.test(path)) return true;
+        if (/\/releases\/latest\/download\/.+/.test(path)) return true;
         if (u.hostname === 'raw.githubusercontent.com') return true;
         if (u.hostname === 'github.com' && (/\/raw\//.test(path) || /\/archive\//.test(path))) return true;
         return false;
+    }
+
+    /* 识别「latest / 跳转」类链接：无扩展名的版本分发入口，需要先解析成最终直链。
+       例：central.github.com/deployments/desktop/desktop/latest/win32、github.com/o/r/releases/latest */
+    function isResolvableLink(url) {
+        var u;
+        try { u = new URL(url); } catch (e) { return false; }
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+        var h = u.hostname.toLowerCase();
+        var p = u.pathname;
+        if (h === 'central.github.com' && /\/latest(\/|$)/i.test(p)) return true;
+        if (h === 'github.com' && /\/releases\/latest(\/|$)/i.test(p)) return true;
+        if (/\/latest\/(win32|win64|win|windows|darwin|mac|macos|osx|linux|deb|rpm|exe|msi|zip|dmg|pkg)($|\/)/i.test(p)) return true;
+        return false;
+    }
+
+    /* 内置映射：常见官方 latest 跳转链接 → GitHub release 资产直链。
+       离线兜底：解析接口不可用（本地打开 / 服务异常）时也能拿到正确直链。 */
+    var LATEST_MAPPINGS = [
+        { re: /^https?:\/\/central\.github\.com\/deployments\/desktop\/desktop\/latest\/win(32|64)$/i,
+          to: 'https://github.com/desktop/desktop/releases/latest/download/GitHubDesktopSetup-x64.exe' }
+    ];
+
+    var resolvedNote = '';   // 本次是否发生过 latest 跳转链接解析（用于结果提示）
+
+    /* 解析跳转链接：先查内置映射，未命中再走服务端 /api/resolve 跟随重定向 */
+    function resolveTarget(url) {
+        for (var i = 0; i < LATEST_MAPPINGS.length; i++) {
+            if (LATEST_MAPPINGS[i].re.test(url)) {
+                return Promise.resolve({ ok: true, url: LATEST_MAPPINGS[i].to, source: '内置规则映射' });
+            }
+        }
+        return fetch('/api/resolve?url=' + encodeURIComponent(url))
+            .then(function(res) { return res.json().catch(function() { return null; }); })
+            .then(function(d) {
+                if (d && d.ok && d.url) return { ok: true, url: d.url, source: '服务端重定向解析' };
+                return { ok: false, error: (d && d.error) || '解析失败' };
+            })
+            .catch(function() { return { ok: false, error: '解析服务不可用' }; });
+    }
+
+    /* 确保 cleanUrl 为可下载直链：latest/跳转链接先解析，成功则替换并记提示 */
+    function ensureDirectLink() {
+        if (isValidDownloadLink(cleanUrl)) return Promise.resolve(true);
+        if (!isResolvableLink(cleanUrl)) return Promise.resolve(false);
+        return resolveTarget(cleanUrl).then(function(r) {
+            if (r.ok && isValidDownloadLink(r.url)) {
+                cleanUrl = normalizeUrl(r.url);
+                resolvedNote = '已解析为最新版本直链';
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /* 复制 / 下载前置守卫：直链直接放行；latest/跳转链接先解析；失败给出可读错误 */
+    function guardAndRun(onReady, onFail) {
+        if (isValidDownloadLink(cleanUrl)) { onReady(); return; }
+        if (!isResolvableLink(cleanUrl)) { onFail('请输入有效的下载链接'); return; }
+        ensureDirectLink().then(function(ok) {
+            if (ok) { onReady(); return; }
+            onFail('该链接未能解析出可下载直链，请直接粘贴 release 资产地址');
+        });
     }
 
     function extract() {
@@ -1483,6 +1702,7 @@
         if (!raw) { showError('请输入网址'); return; }
 
         cleanedOnce = false;
+        resolvedNote = '';
         var target;
         try {
             cleanUrl = normalizeUrl(cleanProxyUrl(raw));
@@ -1494,28 +1714,33 @@
 
         setLoading(true);
 
-        fetch('/api/extract?url=' + encodeURIComponent(target.href))
-            .then(function(res) {
-                return res.json().catch(function() { return null; }).then(function(data) { return { res: res, data: data }; });
-            })
-            .then(function(r) {
-                var data = r.data && r.data.ok ? r.data : null;
+        /* latest / 跳转链接先解析成最终直链（失败不阻断，沿用原链接继续原流程） */
+        ensureDirectLink().catch(function() { return false; }).then(function() {
+            try { target = new URL(cleanUrl); } catch (e) { /* cleanUrl 在入口已校验，不会发生 */ }
 
-                if (data && !data.fallback) { showResult(data); return null; }
+            fetch('/api/extract?url=' + encodeURIComponent(target.href))
+                .then(function(res) {
+                    return res.json().catch(function() { return null; }).then(function(data) { return { res: res, data: data }; });
+                })
+                .then(function(r) {
+                    var data = r.data && r.data.ok ? r.data : null;
 
-                return browserProbeIcon(target).then(function(nativeUrl) {
-                    if (nativeUrl) {
-                        showResult({ url: nativeUrl, preview: nativeUrl, source: '本地探测 ' + nativeUrl.replace(/^https?:\/\//, '') });
-                        return null;
-                    }
-                    if (data) { showResult(data); return null; }
-                    showError((r.data && r.data.error) ? r.data.error : '未找到图标，请检查网址是否正确');
-                });
-            })
-            .catch(function() {
-                showError('请求失败，请检查网络后重试');
-            })
-            .then(function() { setLoading(false); });
+                    if (data && !data.fallback) { showResult(data); return null; }
+
+                    return browserProbeIcon(target).then(function(nativeUrl) {
+                        if (nativeUrl) {
+                            showResult({ url: nativeUrl, preview: nativeUrl, source: '本地探测 ' + nativeUrl.replace(/^https?:\/\//, '') });
+                            return null;
+                        }
+                        if (data) { showResult(data); return null; }
+                        showError((r.data && r.data.error) ? r.data.error : '未找到图标，请检查网址是否正确');
+                    });
+                })
+                .catch(function() {
+                    showError('请求失败，请检查网络后重试');
+                })
+                .then(function() { setLoading(false); });
+        });
     }
 
     btnExtract.addEventListener('click', extract);
@@ -1524,40 +1749,34 @@
     });
 
     btnCopy.addEventListener('click', function() {
-        // 前置校验：无效下载链接禁止复制
-        if (!isValidDownloadLink(cleanUrl)) {
-            showError('请输入有效的下载链接');
-            return;
-        }
-        var reason = channelAccepts(cleanUrl);
-        if (reason) { showError(reason); return; }
-        var link = buildAccelLink();
-        if (!link) { showError('请先填写有效的自定义前缀'); return; }
-        copyText(link).then(function(ok) {
-            if (!ok) { showError('复制失败，请手动选中文本复制'); return; }
-            clearError();
-            btnCopy.textContent = '已复制 ✓';
-            btnCopy.classList.add('copied');
-            setTimeout(function() {
-                btnCopy.textContent = '📋 复制地址';
-                btnCopy.classList.remove('copied');
-            }, 1500);
-        });
+        guardAndRun(function() {
+            var reason = channelAccepts(cleanUrl);
+            if (reason) { showError(reason); return; }
+            var link = buildAccelLink();
+            if (!link) { showError('请先填写有效的自定义前缀'); return; }
+            copyText(link).then(function(ok) {
+                if (!ok) { showError('复制失败，请手动选中文本复制'); return; }
+                clearError();
+                btnCopy.textContent = '已复制 ✓';
+                btnCopy.classList.add('copied');
+                setTimeout(function() {
+                    btnCopy.textContent = '📋 复制地址';
+                    btnCopy.classList.remove('copied');
+                }, 1500);
+            });
+        }, showError);
     });
 
-    // 在新标签页中打开：前置校验，无效则拦截；有效则打开拼接后的纯加速链接
+    // 在新标签页中打开：前置校验（latest/跳转链接自动解析），有效则打开拼接后的纯加速链接
     linkVisit.addEventListener('click', function(e) {
-        if (!isValidDownloadLink(cleanUrl)) {
-            e.preventDefault();
-            showError('请输入有效的下载链接');
-            return;
-        }
-        var reason = channelAccepts(cleanUrl);
-        if (reason) { e.preventDefault(); showError(reason); return; }
-        var link = buildAccelLink();
-        if (!link) { e.preventDefault(); showError('请先填写有效的自定义前缀'); return; }
         e.preventDefault();
-        window.open(link, '_blank', 'noopener,noreferrer');
+        guardAndRun(function() {
+            var reason = channelAccepts(cleanUrl);
+            if (reason) { showError(reason); return; }
+            var link = buildAccelLink();
+            if (!link) { showError('请先填写有效的自定义前缀'); return; }
+            window.open(link, '_blank', 'noopener,noreferrer');
+        }, showError);
     });
 })();
 </script>
@@ -1620,6 +1839,54 @@
     };
     // 加载失败则保持基础纯色背景，不影响页面
     img.src = 'static/img/background1.webp';
+})();
+</script>
+
+<!-- 标题打字机轮播：逐字打出 → 停顿 → 删除 → 下一句循环；页面隐藏时暂停省资源 -->
+<script>
+(function() {
+    'use strict';
+    var el = document.getElementById('siteMotto');
+    if (!el) return;
+
+    var MOTTO_TEXTS = [
+        'GitHub Release · 直链通吃',
+        'latest 跳转链接 · 自动解析',
+        '多通道测速 · 智能排序',
+        '自定义前缀 · 防单点失效'
+    ];
+    var INTERVAL = 180;   // 每字间隔(ms)
+
+    var mottoIndex = 0;
+    var charIndex = 0;
+    var deleting = false;
+    var pauseTicks = 0;
+
+    function tick() {
+        if (pauseTicks-- > 0) return; // 停顿中
+        var text = MOTTO_TEXTS[mottoIndex];
+        if (!deleting) {
+            charIndex++;
+            el.textContent = text.slice(0, charIndex);
+            if (charIndex === text.length) { deleting = true; pauseTicks = 22; } // 打完停 22 拍
+        } else {
+            charIndex--;
+            el.textContent = text.slice(0, charIndex);
+            if (charIndex === 0) {
+                deleting = false;
+                mottoIndex = (mottoIndex + 1) % MOTTO_TEXTS.length; // 切下一句
+                pauseTicks = 10;
+            }
+        }
+    }
+
+    var timer = setInterval(tick, INTERVAL);
+
+    // 页面隐藏时暂停，回到前台恢复（省 CPU）
+    document.addEventListener('visibilitychange', function() {
+        clearInterval(timer);
+        if (!document.hidden) timer = setInterval(tick, INTERVAL);
+    });
 })();
 </script>
 
