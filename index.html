@@ -205,6 +205,25 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     color: #17335c;
 }
 
+/* 输入区右下角的操作键组：清空 + 提取 */
+.cmd-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+/* 次键（清空）：同款胶囊但核心面更浅、文字更淡，不抢提取键的视觉重心 */
+.lc-quiet .lc-core {
+    background: linear-gradient(to bottom, #fdfefe 0%, #e8eef6 46%, #c6d4e4 100%);
+    color: #4a5f79;
+    letter-spacing: .08em;
+}
+.lc-quiet svg { opacity: .65; }
+/* 没有内容可清时压暗，点下去无效果也不会有「坏了」的错觉 */
+#btnClear.is-idle { opacity: .55; }
+#btnClear.is-idle:hover { transform: none; }
+
 /* 复制成功态 */
 #btnCopy.copied .lc-core { color: #0f7a4d; }
 #btnCopy.copied { box-shadow: 0 0 0 2px rgba(15, 157, 99, .28), 0 8px 16px -10px rgba(15, 23, 42, .5); }
@@ -1204,7 +1223,9 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     #urlInput { font-size: 16px; }
     .cmd-bar { flex-direction: column; align-items: stretch; gap: 10px; }
     .cmd-tags { display: none; }
-    #btnExtract { width: 100%; }
+    .cmd-actions { width: 100%; }
+    #btnClear { flex: none; }
+    #btnExtract { flex: 1 1 auto; width: 100%; }
     .lc-lg { min-width: 0; }
     .result { padding: 16px; border-radius: 20px; }
     .icon-well { width: 52px; height: 52px; }
@@ -1338,17 +1359,29 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                             <span class="tag">latest 自动解析</span>
                             <span class="tag">多通道测速</span>
                         </div>
-                        <button id="btnExtract" class="lc lc-lg lc-primary" type="button">
-                            <span class="lc-spot"></span>
-                            <span class="lc-core">
-                                <span class="spinner"></span>
-                                <span class="lc-label" id="btnExtractText">提取</span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-                                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M5 12h13"/><path d="m12.5 6 6 6-6 6"/>
-                                </svg>
-                            </span>
-                        </button>
+                        <div class="cmd-actions">
+                            <button id="btnClear" class="lc lc-md lc-quiet is-idle" type="button"
+                                    title="清空输入并回到初始状态" aria-label="清空">
+                                <span class="lc-core">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+                                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M6 6l12 12"/><path d="M18 6 6 18"/>
+                                    </svg>
+                                    <span class="lc-label">清空</span>
+                                </span>
+                            </button>
+                            <button id="btnExtract" class="lc lc-lg lc-primary" type="button">
+                                <span class="lc-spot"></span>
+                                <span class="lc-core">
+                                    <span class="spinner"></span>
+                                    <span class="lc-label" id="btnExtractText">提取</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M5 12h13"/><path d="m12.5 6 6 6-6 6"/>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1885,11 +1918,13 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     var iconUrl = document.getElementById('iconUrl');
     var btnCopy = document.getElementById('btnCopy');
     var btnCopyText = document.getElementById('btnCopyText');
+    var btnClear = document.getElementById('btnClear');
     var linkVisit = document.getElementById('linkVisit');
     var sourceNote = document.getElementById('sourceNote');
     var cleanedOnce = false;   // 本次是否发生过代理前缀清洗
     var cleanUrl = '';         // 清洗后的纯净原始链接
     var blobConverted = false; // 本次是否把 GitHub blob 网页地址转成了文件直链
+    var gen = 0;               // 提取轮次：清空后作废仍在返回途中的请求结果
 
     function showError(msg) {
         errorBox.textContent = msg;
@@ -1903,6 +1938,38 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
         btnExtractText.textContent = on ? '提取中…' : '提取';
     }
 
+    /* 清空键的可用状态：输入框为空且结果卡已收起时压暗（功能仍可点，只是没东西可清） */
+    function syncClearState() {
+        if (!btnClear) return;
+        var idle = !input.value.trim() && resultCard.classList.contains('hidden');
+        btnClear.classList.toggle('is-idle', idle);
+    }
+
+    /* 清空：输入框归零 + 结果卡收起 + 错误条隐藏 + 回到未提取的初始界面
+       通道选择、测速结果、自定义前缀等一律不动（功能行为不变） */
+    function clearAll() {
+        gen++;                       // 作废仍在返回途中的提取结果
+        input.value = '';
+        cleanUrl = '';
+        cleanedOnce = false;
+        resolvedNote = '';
+        blobConverted = false;
+        resultCard.classList.add('hidden');
+        errorBox.textContent = '';
+        errorBox.classList.add('hidden');
+        iconUrl.textContent = '';
+        sourceNote.textContent = '';
+        iconPreview.removeAttribute('src');
+        iconPreview.onerror = null;
+        setLoading(false);
+        syncClearState();
+        try { input.focus(); } catch (e) {}
+    }
+
+    if (btnClear) btnClear.addEventListener('click', clearAll);
+    input.addEventListener('input', syncClearState);
+    syncClearState();
+
     function showResult(data) {
         iconPreview.onerror = function() { iconPreview.src = PLACEHOLDER; };
         iconPreview.src = data.preview;
@@ -1915,6 +1982,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
         if (resolvedNote) note = (note ? note + ' · ' : '') + resolvedNote;
         sourceNote.textContent = note;
         resultCard.classList.remove('hidden');
+        syncClearState();
     }
 
     function copyText(text) {
@@ -2204,6 +2272,8 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
         var raw = input.value.trim();
         if (!raw) { showError('请输入网址'); return; }
 
+        var myGen = ++gen;   // 本轮提取的编号：被清空/重新提取后，旧结果不再落地
+
         cleanedOnce = false;
         resolvedNote = '';
         blobConverted = false;
@@ -2223,6 +2293,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
 
         /* latest / 跳转链接先解析成最终直链（失败不阻断，沿用原链接继续原流程） */
         ensureDirectLink().catch(function() { return false; }).then(function() {
+            if (myGen !== gen) return;   // 期间被清空或重新提取，本轮结果作废
             try { target = new URL(cleanUrl); } catch (e) { /* cleanUrl 在入口已校验，不会发生 */ }
 
             fetch('/api/extract?url=' + encodeURIComponent(target.href))
@@ -2230,11 +2301,13 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                     return res.json().catch(function() { return null; }).then(function(data) { return { res: res, data: data }; });
                 })
                 .then(function(r) {
+                    if (myGen !== gen) return null;
                     var data = r.data && r.data.ok ? r.data : null;
 
                     if (data && !data.fallback) { showResult(data); return null; }
 
                     return browserProbeIcon(target).then(function(nativeUrl) {
+                        if (myGen !== gen) return null;
                         if (nativeUrl) {
                             showResult({ url: nativeUrl, preview: nativeUrl, source: '本地探测 ' + nativeUrl.replace(/^https?:\/\//, '') });
                             return null;
@@ -2244,9 +2317,14 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                     });
                 })
                 .catch(function() {
+                    if (myGen !== gen) return;
                     showError('请求失败，请检查网络后重试');
                 })
-                .then(function() { setLoading(false); });
+                .then(function() {
+                    if (myGen !== gen) return;
+                    setLoading(false);
+                    syncClearState();
+                });
         });
     }
 
