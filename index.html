@@ -492,17 +492,29 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     width: 340px;
     position: sticky;
     top: clamp(20px, 3vw, 40px);
-    padding: 16px 15px 15px;
-    border-radius: 24px;
-    background: linear-gradient(168deg, #eff4fa 0%, #e3eaf4 55%, #d9e3ef 100%);
-    border: 1px solid rgba(255, 255, 255, .7);
-    box-shadow: var(--sh-raised);
-    max-height: calc(100vh - 80px);
+    padding: 5px;               /* 外沿厚度与 .cmd 一致 */
+    border-radius: 30px;
+    background: linear-gradient(180deg, var(--rim-dark) 0%, #bfd0e2 46%, var(--rim-light) 100%);
+    box-shadow:
+        0 20px 38px -20px rgba(15, 23, 42, .45),
+        0 2px 6px rgba(15, 23, 42, .10);
+}
+
+/* 内槽：与右侧输入框 .cmd-in 完全同款凹陷配方 */
+.sidebar-well {
+    border-radius: 25px;
+    padding: 14px 13px 13px;
+    background: var(--bg);
+    box-shadow:
+        inset 0 0 12px rgba(2, 33, 67, .26),
+        inset 0 -7px 4px rgba(255, 255, 255, .62),
+        inset 0 5px 6px rgba(154, 169, 184, .55);
+    max-height: calc(100vh - 90px);
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
-.sidebar::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.sidebar-well::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 .sidebar-head {
     display: flex;
@@ -1200,16 +1212,22 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
         width: 100%;
         position: static;
         max-height: none;
-        padding: 14px;
-        border-radius: 20px;
+        padding: 5px;
+        border-radius: 26px;
+    }
+    .sidebar-well {
+        max-height: none;
+        overflow: visible;
+        border-radius: 21px;
+        padding: 12px;
     }
     .method-list { flex-direction: row; overflow-x: auto; padding: 4px 2px 8px; gap: 8px; }
     .method-list::-webkit-scrollbar { height: 0; }
     .method-item { flex: 0 0 216px; }
     .sidebar-head { padding-bottom: 8px; }
     .help-btn { margin-top: 6px; }
-    /* 手机端：感谢按钮移到底部左下角（桌面端仍为右下角） */
-    .thanks-fab { right: auto; left: clamp(16px, 2.4vw, 30px); }
+    /* 手机端：感谢按钮移除（屏幕太小，不再展示） */
+    .thanks-fab { display: none; }
 }
 
 @media (max-width: 560px) {
@@ -1275,8 +1293,9 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
 <div id="bgLayer" aria-hidden="true"></div>
 
 <div class="layout">
-    <!-- ========== 左侧：加速通道 ========== -->
+    <!-- ========== 左侧：加速通道（外沿凸起 + 内槽凹陷，与右侧输入框同语言） ========== -->
     <aside class="sidebar">
+        <div class="sidebar-well">
         <div class="sidebar-head">
             <span><i class="head-dot"></i>加速通道</span>
             <button id="btnSpeed" class="lc lc-sm" type="button">
@@ -1298,6 +1317,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                    placeholder="https://你的加速前缀/">
         </div>
         <button class="help-btn" id="helpBtn" type="button">无法下载？</button>
+        </div>
     </aside>
 
     <!-- 无法下载？提示弹窗 -->
@@ -1356,11 +1376,6 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                                placeholder="粘贴下载直链 / 官网 latest 跳转链接均可" autocomplete="off">
                     </div>
                     <div class="cmd-bar">
-                        <div class="cmd-tags">
-                            <span class="tag">GitHub Release</span>
-                            <span class="tag">latest 自动解析</span>
-                            <span class="tag">多通道测速</span>
-                        </div>
                         <div class="cmd-actions">
                             <button id="btnClear" class="lc lc-md lc-quiet is-idle" type="button"
                                     title="清空输入并回到初始状态" aria-label="清空">
@@ -1474,7 +1489,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                     <span class="thanks-host">gh-proxy.at9.net</span>
                 </a>
             </div>
-            <p class="thanks-foot">通路可能随时调整或停服，若维护者希望改名 / 补充链接 / 移除条目，说一声即可。</p>
+            <p class="thanks-foot">通路可能随时调整或停服，若维护者希望改名 / 补充链接 / 移除条目。</p>
         </div>
     </div>
 </div>
