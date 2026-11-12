@@ -990,7 +990,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
 }
 
 /* ============================================================
-   右下角：感谢通路（Gemini 胶囊键 + 拟态署名弹窗）
+   右下角（手机端左下角）：感谢通路（Gemini 胶囊键 + 拟态署名弹窗）
    ============================================================ */
 .thanks-fab {
     position: fixed;
@@ -1208,6 +1208,8 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     .method-item { flex: 0 0 216px; }
     .sidebar-head { padding-bottom: 8px; }
     .help-btn { margin-top: 6px; }
+    /* 手机端：感谢按钮移到底部左下角（桌面端仍为右下角） */
+    .thanks-fab { right: auto; left: clamp(16px, 2.4vw, 30px); }
 }
 
 @media (max-width: 560px) {
@@ -1925,6 +1927,8 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     var cleanUrl = '';         // 清洗后的纯净原始链接
     var blobConverted = false; // 本次是否把 GitHub blob 网页地址转成了文件直链
     var gen = 0;               // 提取轮次：清空后作废仍在返回途中的请求结果
+    var xgetFallback = false;  // 本次拼接是否发生了 Xget → 通用通道的自动回退
+    var lastResultNote = '';   // 最近一次结果卡的提示文案（复制/下载时用于追加回退提示）
 
     function showError(msg) {
         errorBox.textContent = msg;
@@ -1981,6 +1985,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
         if (blobConverted) note = (note ? note + ' · ' : '') + 'GitHub 网页地址已转为文件直链';
         if (resolvedNote) note = (note ? note + ' · ' : '') + resolvedNote;
         sourceNote.textContent = note;
+        lastResultNote = note;
         resultCard.classList.remove('hidden');
         syncClearState();
     }
@@ -2061,6 +2066,22 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
         if (last > 0) {
             // 前面存在代理前缀，截取最后协议头开始的纯净链接
             s = s.slice(last);
+            cleanedOnce = true;
+        }
+        /* Xget 形式的加速链接（https://xget.xi-xu.me/gh/...）只有一个协议头，
+           上面的"多协议头"识别抓不到它：按平台前缀反向还原出原始直链，
+           否则粘回输入框会生成双重代理坏链 / 在 Xget 通道下直接报错 */
+        var mx = s.match(/^https?:\/\/xget\.xi-xu\.me\/(gh|gl|hf|gist)\/(.+)$/i);
+        if (mx) {
+            var xseg = mx[1].toLowerCase(), xrest = mx[2];
+            if (xseg === 'gh') {
+                /* /gh/o/r/raw/refs/heads/分支/文件 ←→ raw.githubusercontent.com 直链 */
+                var mraw = xrest.match(/^([^\/]+)\/([^\/]+)\/raw\/refs\/heads\/([^\/]+)\/(.+)$/);
+                s = mraw ? 'https://raw.githubusercontent.com/' + mraw[1] + '/' + mraw[2] + '/' + mraw[3] + '/' + mraw[4]
+                         : 'https://github.com/' + xrest;
+            } else if (xseg === 'gl') { s = 'https://gitlab.com/' + xrest; }
+            else if (xseg === 'hf')   { s = 'https://huggingface.co/' + xrest; }
+            else                      { s = 'https://gist.github.com/' + xrest; }
             cleanedOnce = true;
         }
         return s;
@@ -2155,6 +2176,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
 
     /* 拼接加速链接：按通道类型生成 */
     function buildAccelLink() {
+        xgetFallback = false;
         var ch = currentChannel();
         if (ch.type === 'custom') {
             var p = (document.getElementById('customPrefix') || {}).value;
@@ -2163,19 +2185,30 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
             if (!/^https?:\/\//i.test(p)) return '';
             return p.replace(/\/+$/, '') + '/' + cleanUrl;
         }
-        if (ch.type === 'xget') return xgetUrl(cleanUrl, ch.value);
+        if (ch.type === 'xget') {
+            var xl = xgetUrl(cleanUrl, ch.value);
+            if (xl) return xl;
+            /* Xget 不支持该站点：自动回退到通用前缀通道，保证链接始终可用（与帮助弹窗说明一致） */
+            xgetFallback = true;
+            return 'https://g.z321.cc.cd/' + cleanUrl;
+        }
         if (ch.type === 'prefix') return ch.value + cleanUrl;
         if (ch.type === 'replace') return kkGitHubUrl(cleanUrl);
         return ch.value + cleanUrl;
     }
 
+    /* 复制 / 下载后刷新提示：若发生 Xget 自动回退则告知用户实际使用的通道 */
+    function syncFallbackNote() {
+        if (!xgetFallback) return;
+        var tip = 'Xget 不支持该站点，已自动改用通用通道';
+        sourceNote.textContent = lastResultNote ? (lastResultNote + ' · ' + tip) : tip;
+    }
+
     /* 校验当前通道是否支持该链接，返回 '' 表示支持，否则返回错误提示 */
     function channelAccepts(url) {
         var ch = currentChannel();
-        if (ch.type === 'xget') {
-            if (xgetUrl(url, ch.value)) return '';
-            return 'Xget 通道仅支持 github.com / gitlab.com / huggingface.co 链接';
-        }
+        /* Xget 通道不支持时 buildAccelLink 会自动回退到通用通道，这里一律放行 */
+        if (ch.type === 'xget') return '';
         if (ch.type !== 'replace') return '';
         var u;
         try { u = new URL(url); } catch (e) { return '链接格式不正确'; }
@@ -2339,6 +2372,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
             if (reason) { showError(reason); return; }
             var link = buildAccelLink();
             if (!link) { showError('请先填写有效的自定义前缀'); return; }
+            syncFallbackNote();
             copyText(link).then(function(ok) {
                 if (!ok) { showError('复制失败，请手动选中文本复制'); return; }
                 clearError();
@@ -2360,6 +2394,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
             if (reason) { showError(reason); return; }
             var link = buildAccelLink();
             if (!link) { showError('请先填写有效的自定义前缀'); return; }
+            syncFallbackNote();
             window.open(link, '_blank', 'noopener,noreferrer');
         }, showError);
     });
