@@ -205,7 +205,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     color: #17335c;
 }
 
-/* 输入区右下角的操作键组：清空 + 提取 */
+/* 输入区右下角的操作键：清空（提取键已移至输入行右侧） */
 .cmd-actions {
     display: flex;
     align-items: center;
@@ -441,6 +441,8 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     letter-spacing: .01em;
 }
 #urlInput::placeholder { color: #93a2b4; font-weight: 500; }
+/* 提取键在输入行右侧：不参与伸缩，输入框占满剩余宽度（同上一版布局） */
+#btnExtract { flex: none; }
 
 /* 底部操作行 */
 .cmd-bar {
@@ -1245,7 +1247,7 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
     .cmd-tags { display: none; }
     .cmd-actions { width: 100%; }
     #btnClear { flex: none; }
-    #btnExtract { flex: 1 1 auto; width: 100%; }
+    #btnExtract { flex: none; }
     .lc-lg { min-width: 0; }
     .result { padding: 16px; border-radius: 20px; }
     .icon-well { width: 52px; height: 52px; }
@@ -1374,6 +1376,17 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                         </svg>
                         <input id="urlInput" type="text" spellcheck="false"
                                placeholder="粘贴下载直链 / 官网 latest 跳转链接均可" autocomplete="off">
+                        <button id="btnExtract" class="lc lc-lg lc-primary" type="button">
+                            <span class="lc-spot"></span>
+                            <span class="lc-core">
+                                <span class="spinner"></span>
+                                <span class="lc-label" id="btnExtractText">提取</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M5 12h13"/><path d="m12.5 6 6 6-6 6"/>
+                                </svg>
+                            </span>
+                        </button>
                     </div>
                     <div class="cmd-bar">
                         <div class="cmd-actions">
@@ -1385,17 +1398,6 @@ button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3p
                                         <path d="M6 6l12 12"/><path d="M18 6 6 18"/>
                                     </svg>
                                     <span class="lc-label">清空</span>
-                                </span>
-                            </button>
-                            <button id="btnExtract" class="lc lc-lg lc-primary" type="button">
-                                <span class="lc-spot"></span>
-                                <span class="lc-core">
-                                    <span class="spinner"></span>
-                                    <span class="lc-label" id="btnExtractText">提取</span>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-                                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M5 12h13"/><path d="m12.5 6 6 6-6 6"/>
-                                    </svg>
                                 </span>
                             </button>
                         </div>
